@@ -195,7 +195,7 @@ function prettyErr(e){
 }
 
 /* ============================================================
-   ONBOARDING
+   ONBOARDING (REWRITTEN FOR INVITE CODE LOOKUP)
    ============================================================ */
 function renderOnboarding(user){
   app.innerHTML=`
@@ -225,34 +225,70 @@ function renderOnboarding(user){
       renderMinderHome();
     };
   };
-  $("#parent").onclick=async()=>{
+  
+  // Re-routed parent logic to code entry to prevent the global query hang
+  $("#parent").onclick=()=>renderParentLinkInterface(user);
+}
+
+function renderParentLinkInterface(user, errorMsg = null) {
+  app.innerHTML=`
+    <div class="splash fade">
+      <h2 style="font-size:26px">Link to your child</h2>
+      <p class="muted" style="margin:10px 0 22px;line-height:1.5">Enter the setup link code provided by your childminder below.</p>
+      <div id="parent-err">${errorMsg ? `<div class="err">${esc(errorMsg)}</div>` : ''}</div>
+      <input id="invcode" placeholder="e.g. LN-X4A2" style="text-align:center;font-family:monospace;font-size:20px;letter-spacing:2px;text-transform:uppercase;">
+      <div style="height:16px"></div>
+      <button class="btn btn-primary" id="claimcode">Verify &amp; Link Profile</button>
+      <button class="btn btn-ghost" id="out2" style="color:var(--sub)">Sign out</button>
+    </div>`;
+    
+  $("#out2").onclick=()=>signOut(auth);
+  $("#claimcode").onclick=async()=>{
+    const code = $("#invcode").value.trim().toUpperCase();
+    if(!code) return;
+    
     app.innerHTML=`<div class="spin"></div>`;
-    try{
-      const email=(user.email||"").toLowerCase();
-      const snap=await getDocs(query(collectionGroup(db,"children"),where("parentEmails","array-contains",email)));
-      if(snap.empty){
-        app.innerHTML=`
-          <div class="splash fade">
-            <h2 style="font-size:26px">Not linked yet</h2>
-            <p class="muted" style="margin:10px 0 22px;line-height:1.5">No childminder has added <b>${esc(email)}</b> yet.<br>Ask them to add your email address to your child, then try again.</p>
-            <button class="btn btn-primary" id="retry">Try again</button>
-            <button class="btn btn-ghost" id="out2" style="color:var(--sub)">Sign out</button>
-          </div>`;
-        $("#retry").onclick=()=>renderOnboarding(user);
-        $("#out2").onclick=()=>signOut(auth);
+    try {
+      const inviteRef = doc(db, "invites", code);
+      const inviteSnap = await getDoc(inviteRef);
+      
+      if(!inviteSnap.exists()) {
+        renderParentLinkInterface(user, "Code not found. Please double-check it.");
         return;
       }
-      const childIds=[]; let settingId=null;
-      for(const d of snap.docs){
-        settingId=d.ref.parent.parent.id; childIds.push(d.id);
-        await updateDoc(d.ref,{parentUids:arrayUnion(user.uid)});
+      
+      const inviteData = inviteSnap.data();
+      if(inviteData.status === "used") {
+        renderParentLinkInterface(user, "This setup code has already been used.");
+        return;
       }
+      
+      const email = (user.email||"").toLowerCase();
+      const settingId = inviteData.settingId;
+      const childId = inviteData.childId;
+      
+      // Update child's profile directly
+      const childRef = doc(db, "settings", settingId, "children", childId);
+      await updateDoc(childRef, {
+        parentUids: arrayUnion(user.uid),
+        parentEmails: arrayUnion(email)
+      });
+      
+      // Mark the code as burnt
+      await updateDoc(inviteRef, {
+        status: "used",
+        usedBy: user.uid,
+        usedAt: serverTimestamp()
+      });
+      
+      // Complete user mapping
+      const childIds = [childId];
       await setDoc(doc(db,"users",user.uid),{role:"parent",name:user.displayName||"",email,settingId,childIds});
       state.profile={role:"parent",settingId,childIds}; state.settingId=settingId;
       renderParentHome();
-    }catch(e){
-      app.innerHTML=`<div class="splash"><p class="err">${esc(e.message)}</p><button class="btn btn-ghost" id="out3">Sign out</button></div>`;
-      $("#out3").onclick=()=>signOut(auth);
+      
+    } catch(e) {
+      renderParentLinkInterface(user, e.message);
     }
   };
 }
@@ -283,6 +319,7 @@ function renderMinderHome(){
         <div style="flex:1">
           <div style="font-weight:800;font-size:17px">${esc(c.name)}</div>
           <div class="muted" style="font-size:13px">${esc(c.dob||"")}</div>
+          ${c.setupCode ? `<div style="font-family:monospace;font-size:11px;color:var(--gold);margin-top:2px;font-weight:700">Code: ${esc(c.setupCode)}</div>` : ''}
         </div>
         <span class="muted" style="font-size:22px">›</span></button>`;
     }).join("");
@@ -299,18 +336,32 @@ function openAddChild(){
     <div style="height:12px"></div>
     <input id="dob" placeholder="Age or date of birth — e.g. 2y 4m">
     <div style="height:14px"></div>
-    <label class="muted" style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1px">Parent email(s)</label>
-    <div style="height:6px"></div>
-    <input id="pe" type="email" placeholder="parent@email.com (comma-separate for two)">
-    <p class="muted" style="font-size:12px;margin:8px 0 18px;line-height:1.4">The parent signs up with this exact email and is auto-linked — no one else can see their child.</p>
-    <button class="btn btn-primary" id="save">Add child</button>`);
+    <p class="muted" style="font-size:12px;margin:4px 0 18px;line-height:1.4">Saving will automatically generate a clean link setup code you can hand directly to the parent.</p>
+    <button class="btn btn-primary" id="save">Add child &amp; Generate Code</button>`);
+    
   $("#save").onclick=async()=>{
     const name=$("#cn").value.trim(); if(!name)return;
-    const emails=$("#pe").value.split(",").map(s=>s.trim().toLowerCase()).filter(Boolean);
+    $("#save".disabled)=true;
+    
+    // Generate simple clean 6 character key
+    const randSegment = Math.random().toString(36).substring(2,6).toUpperCase();
+    const setupCode = `LN-${randSegment}`;
     const colour=COLOURS[Math.floor(Math.random()*COLOURS.length)];
-    await addDoc(collection(db,"settings",state.settingId,"children"),{
-      name,dob:$("#dob").value.trim(),colour,parentEmails:emails,parentUids:[],createdAt:serverTimestamp()
+    
+    // 1. Add child record
+    const childRef = await addDoc(collection(db,"settings",state.settingId,"children"),{
+      name,dob:$("#dob").value.trim(),colour,parentEmails:[],parentUids:[],setupCode,createdAt:serverTimestamp()
     });
+    
+    // 2. Set the global look-up code mapping document
+    await setDoc(doc(db, "invites", setupCode), {
+      settingId: state.settingId,
+      childId: childRef.id,
+      childName: name,
+      status: "pending",
+      createdAt: serverTimestamp()
+    });
+    
     sheet.remove();
   };
 }
@@ -337,178 +388,5 @@ async function renderParentHome(){
     <button class="card row" style="width:100%;padding:13px;border:1px solid var(--line);background:#fff;text-align:left" data-id="${c.id}">
       <div class="avatar" style="background:${c.colour||'#6C4AE2'}">${esc((c.name||"?")[0])}</div>
       <div style="flex:1"><div style="font-weight:800;font-size:17px">${esc(c.name)}</div></div>
-      <span class="muted" style="font-size:22px">›</span></button>`).join("");
-  $("#list").querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>{
-    const c=kids.find(x=>x.id===b.dataset.id); openChild(c.id,c,false);
-  });
-}
-
-/* ============================================================
-   CHILD DETAIL — Diary / Journey / Messages
-   ============================================================ */
-function openChild(childId,child,admin){
-  clearSubs();
-  let tab="diary";
-  const base=["settings",state.settingId,"children",childId];
-  app.innerHTML=`
-    <div class="topbar">
-      <button class="back" id="back">‹ ${admin?"All children":"Sign out"}</button>
-      <h1 style="font-size:30px;color:${child.colour||'var(--violet)'};margin-top:6px">${esc(child.name)}</h1>
-      <p class="muted" style="margin:2px 0 0;font-weight:600">${admin?"Childminder view":"Today"}</p>
-    </div>
-    <div class="tabs">
-      <button class="tab on" data-t="diary">Diary</button>
-      <button class="tab" data-t="journey">Journey</button>
-      <button class="tab" data-t="chat">Messages</button>
-    </div>
-    <div id="body" class="screen" style="padding-top:0"></div>
-    <div id="fabwrap"></div>`;
-  $("#back").onclick=()=>admin?renderMinderHome():signOut(auth);
-  app.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
-    tab=t.dataset.t;
-    app.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===t));
-    mount();
-  });
-  mount();
-
-  function mount(){
-    clearSubs();
-    const body=$("#body"),fw=$("#fabwrap"); fw.innerHTML="";
-    if(tab==="diary")   mountDiary(body,fw);
-    if(tab==="journey") mountJourney(body,fw);
-    if(tab==="chat")    mountChat(body);
-  }
-
-  function mountDiary(body,fw){
-    body.innerHTML=`<div id="d"><div class="spin"></div></div>`;
-    const q=query(collection(db,...base,"entries"),orderBy("createdAt","desc"));
-    subs.push(onSnapshot(q,s=>{
-      if(s.empty){ $("#d").innerHTML=`<p class="muted center" style="padding:46px 0">No updates yet today.</p>`; return; }
-      $("#d").innerHTML=s.docs.map(d=>entryCard(d.data())).join("");
-    }));
-    if(admin){ fw.innerHTML=`<button class="fab" id="addE">＋ Add update</button>`;
-      $("#addE").onclick=()=>openDiaryComposer(base); }
-  }
-
-  function mountJourney(body,fw){
-    body.innerHTML=`${admin?"":`<p class="muted" style="font-size:13px;margin:4px 0 14px;line-height:1.4">${esc(child.name)}'s learning journey — moments captured against the EYFS areas of learning.</p>`}<div id="j"><div class="spin"></div></div>`;
-    const q=query(collection(db,...base,"observations"),orderBy("createdAt","desc"));
-    subs.push(onSnapshot(q,s=>{
-      if(s.empty){ $("#j").innerHTML=`<p class="muted center" style="padding:46px 0">No observations yet.</p>`; return; }
-      $("#j").innerHTML=s.docs.map(d=>obsCard(d.data())).join("");
-    }));
-    if(admin){ fw.innerHTML=`<button class="fab" id="addO">＋ New observation</button>`;
-      $("#addO").onclick=()=>openObsComposer(base); }
-  }
-
-  function mountChat(body){
-    body.innerHTML=`<div id="c" style="padding-bottom:70px"><div class="spin"></div></div>
-      <div class="chatbar"><input id="msg" placeholder="Message…"><button class="btn btn-primary" id="send" style="width:auto;margin:0;padding:11px 20px">Send</button></div>`;
-    const q=query(collection(db,...base,"messages"),orderBy("createdAt"));
-    const me=admin?"fran":"parent";
-    subs.push(onSnapshot(q,s=>{
-      $("#c").innerHTML=s.empty?`<p class="muted center" style="padding:46px 0">No messages yet.</p>`:
-        s.docs.map(d=>{ const m=d.data(),mine=m.from===me;
-          return `<div style="display:flex;justify-content:${mine?"flex-end":"flex-start"};margin-bottom:8px">
-            <div class="bubble" style="background:${mine?"var(--violet)":"#fff"};color:${mine?"#fff":"var(--ink)"};${mine?"":"border:1px solid var(--line)"}">${esc(m.text)}<div class="t">${fmtTime(m.createdAt)}</div></div></div>`;
-        }).join("");
-      $("#c").scrollTop=$("#c").scrollHeight;
-    }));
-    const send=async()=>{ const v=$("#msg").value.trim(); if(!v)return; $("#msg").value="";
-      await addDoc(collection(db,...base,"messages"),{from:me,text:v,createdAt:serverTimestamp()}); };
-    $("#send").onclick=send;
-    $("#msg").onkeydown=e=>{ if(e.key==="Enter")send(); };
-  }
-}
-
-/* ============================================================
-   CARDS
-   ============================================================ */
-function entryCard(e){
-  const t=TYPES[e.type]||TYPES.note;
-  return `<div class="card fade">
-    <div style="padding:14px;display:flex;gap:12px">
-      <div class="iconbox" style="background:${t.tint}">${t.icon}</div>
-      <div style="flex:1">
-        <div style="display:flex;justify-content:space-between;align-items:baseline">
-          <span style="font-weight:800;font-size:14px">${t.label}</span>
-          <span class="muted" style="font-size:12px;font-weight:700">${fmtTime(e.createdAt)}</span>
-        </div>
-        ${e.detail?`<div style="font-size:14.5px;line-height:1.45;margin-top:2px">${esc(e.detail)}</div>`:""}
-      </div></div></div>`;
-}
-function obsCard(o){
-  return `<div class="card fade">
-    <div style="padding:16px">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
-        <span style="font-family:'Fraunces',serif;font-weight:600;font-size:18px">${esc(o.title)}</span>
-        <span class="muted" style="font-size:12px;font-weight:700">${fmtDate(o.createdAt)}</span>
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">${(o.areas||[]).map(areaTag).join("")}</div>
-      <div style="font-size:14.5px;line-height:1.5">${esc(o.note)}</div>
-      ${o.nextSteps?`<div class="next"><div class="lbl">Next steps</div><div style="font-size:13.5px;line-height:1.45">${esc(o.nextSteps)}</div></div>`:""}
-    </div></div>`;
-}
-function areaTag(a){ const x=AREAS[a]; if(!x)return"";
-  return `<span class="areatag" style="background:${x.colour}22"><span class="dot" style="background:${x.colour}"></span>${x.short}</span>`; }
-
-/* ============================================================
-   COMPOSERS
-   ============================================================ */
-function openDiaryComposer(base){
-  let type="meal";
-  const sheet=mountSheet("New update",`
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px" id="types">
-      ${Object.entries(TYPES).map(([k,v])=>`<button class="chip${k==="meal"?" on":""}" data-k="${k}">${v.icon} ${v.label}</button>`).join("")}
-    </div>
-    <textarea id="detail" rows="3" placeholder="What happened? e.g. Had a big lunch and went down well for a nap…"></textarea>
-    <div style="height:16px"></div>
-    <button class="btn btn-primary" id="save">Post to parent</button>`);
-  sheet.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{
-    type=c.dataset.k; sheet.querySelectorAll(".chip").forEach(x=>x.classList.toggle("on",x===c)); });
-  $("#save").onclick=async()=>{
-    const detail=$("#detail").value.trim(); if(!detail)return;
-    $("#save").disabled=true; $("#save").textContent="Posting…";
-    await addDoc(collection(db,...base,"entries"),{type,detail,createdAt:serverTimestamp()});
-    sheet.remove();
-  };
-}
-function openObsComposer(base){
-  let areas=[];
-  const sheet=mountSheet("New observation",`
-    <input id="title" placeholder="Title — e.g. Building a tall tower">
-    <div style="height:12px"></div>
-    <textarea id="note" rows="4" placeholder="What did you see? Describe the moment…"></textarea>
-    <div class="muted" style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin:16px 0 8px">EYFS areas of learning</div>
-    <div id="areas" style="display:flex;flex-wrap:wrap;gap:7px">
-      ${Object.entries(AREAS).map(([k,v])=>`<button class="chip" data-k="${k}">
-        <span class="dot" style="display:inline-block;background:${v.colour};margin-right:6px;vertical-align:middle"></span>${v.short}${v.prime?'<span class="muted" style="font-weight:600"> ·prime</span>':""}</button>`).join("")}
-    </div>
-    <textarea id="next" rows="2" placeholder="Next steps (optional) — how will you extend this?" style="margin-top:16px"></textarea>
-    <div style="height:16px"></div>
-    <button class="btn btn-gold" id="save">Save to journey</button>`);
-  sheet.querySelectorAll("#areas .chip").forEach(c=>c.onclick=()=>{
-    const k=c.dataset.k;
-    if(areas.includes(k)){areas=areas.filter(x=>x!==k);c.classList.remove("on");}
-    else{areas.push(k);c.classList.add("on");}
-  });
-  $("#save").onclick=async()=>{
-    const title=$("#title").value.trim(),note=$("#note").value.trim();
-    if(!title||!note||!areas.length){alert("Add a title, a note and at least one EYFS area.");return;}
-    $("#save").disabled=true; $("#save").textContent="Saving…";
-    await addDoc(collection(db,...base,"observations"),{title,note,areas,nextSteps:$("#next").value.trim(),createdAt:serverTimestamp()});
-    sheet.remove();
-  };
-}
-
-/* ---------- sheet helper ---------- */
-function mountSheet(title,inner){
-  const bd=document.createElement("div"); bd.className="backdrop";
-  bd.innerHTML=`<div class="sheet fade"><div class="grab"></div><h3 style="font-size:23px;margin-bottom:14px">${title}</h3>${inner}</div>`;
-  bd.onclick=e=>{ if(e.target===bd)bd.remove(); };
-  document.body.appendChild(bd);
-  return bd;
-}
-</script>
-</body>
-</html>
+      <span clas
+  
