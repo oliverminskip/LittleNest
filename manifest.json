@@ -1,0 +1,17 @@
+{
+  "name": "LittleNest",
+  "short_name": "LittleNest",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#F6F3FC",
+  "theme_color": "#6C4AE2",
+  "description": "Premium childcare connection platform for minders and parents.",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://img.icons8.com/fluency/512/nest.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
