@@ -210,9 +210,15 @@ function refreshDashboardBadge(cid){
 onAuthStateChanged(auth,async user=>{
   clearSubs();
   if(!user){clearAlerts();renderAuth();return;}
-  app.innerHTML='<div class="spin"></div>';
+  app.innerHTML='<div class="spin"></div><p style="text-align:center;margin-top:0;padding:0 20px"><button onclick="import(\'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js\').then(m=>m.signOut(getAuth()))" style="background:none;border:none;color:#7E7591;font-size:13px;font-family:inherit;cursor:pointer;text-decoration:underline">Having trouble? Tap to sign out</button></p>';
+  // Sign out helper accessible from inline onclick
+  window._signOut=()=>signOut(auth);
+  app.querySelector('button')&&(app.querySelector('button').onclick=()=>signOut(auth));
+  // Timeout — if Firebase doesn't respond in 8s, force sign out
+  const timeout=setTimeout(()=>signOut(auth),8000);
   try{
     const snap=await getDoc(doc(db,"users",user.uid));
+    clearTimeout(timeout);
     if(snap.exists()){
       state.profile=snap.data();state.settingId=state.profile.settingId;
       await requestNotifPermission();
@@ -225,7 +231,7 @@ onAuthStateChanged(auth,async user=>{
         renderParentHome();
       }
     }else{renderOnboarding(user);}
-  }catch(e){app.innerHTML=`<div class="splash"><p class="err">${esc(e.message)}</p><button class="btn btn-ghost" id="so">Sign out</button></div>`;$("#so").onclick=()=>signOut(auth);}
+  }catch(e){clearTimeout(timeout);app.innerHTML=`<div class="splash"><p class="err">${esc(e.message)}</p><button class="btn btn-ghost" id="so">Sign out</button></div>`;$("#so").onclick=()=>signOut(auth);}
 });
 
 /* ── auth screen ── */
@@ -315,4 +321,401 @@ function renderParentLink(user,err=null){
       if(invSnap.data().status==="used"){renderParentLink(user,"This code has already been used.");return;}
       const {settingId,childId}=invSnap.data();
       const email=(user.email||"").toLowerCase();
-      await 
+      await updateDoc(doc(db,"settings",settingId,"children",childId),{parentUids:arrayUnion(user.uid),parentEmails:arrayUnion(email)});
+      await updateDoc(doc(db,"invites",code),{status:"used",usedBy:user.uid,usedAt:serverTimestamp()});
+      const childIds=[childId];
+      await setDoc(doc(db,"users",user.uid),{role:"parent",name:user.displayName||"",email,settingId,childIds});
+      state.profile={role:"parent",settingId,childIds};state.settingId=settingId;
+      initAlerts("parent",settingId,childIds);
+      renderParentProfileSetup(settingId,childId,invSnap.data().childName||"your child");
+    }catch(e){renderParentLink(user,e.message);}
+  };
+}
+
+/* ── parent profile setup (shown once after linking) ── */
+function renderParentProfileSetup(settingId,childId,childName){
+  app.innerHTML=`
+    <div class="screen fade" style="padding-top:40px">
+      <h2 style="font-size:28px;margin-bottom:6px">One more step</h2>
+      <p class="muted" style="margin:0 0 24px;line-height:1.5">Help ${esc(childName)}'s childminder have your details to hand. You can update these any time.</p>
+      <div class="field-row"><div class="field-label">Your full name</div><input id="pname" placeholder="e.g. Sophie Harper" value="${esc(auth.currentUser?.displayName||"")}"></div>
+      <div class="field-row"><div class="field-label">Your mobile number</div><input id="pphone" type="tel" placeholder="e.g. 07700 900123"></div>
+      <div class="field-row"><div class="field-label">Emergency contact name</div><input id="ename" placeholder="e.g. James Harper"></div>
+      <div class="field-row"><div class="field-label">Emergency contact number</div><input id="ephone" type="tel" placeholder="e.g. 07700 900456"></div>
+      <div class="field-row"><div class="field-label">Medical notes (optional)</div><textarea id="medical" rows="2" placeholder="Allergies, medication, GP details…"></textarea></div>
+      <div style="height:8px"></div>
+      <button class="btn btn-primary" id="saveprofile">Save &amp; continue</button>
+      <button class="btn btn-ghost" id="skipprofile" style="color:var(--sub)">Skip for now</button>
+    </div>`;
+  const save=async(skip)=>{
+    if(!skip){
+      const updates={};
+      const pname=$("#pname").value.trim();const pphone=$("#pphone").value.trim();
+      const ename=$("#ename").value.trim();const ephone=$("#ephone").value.trim();
+      const medical=$("#medical").value.trim();
+      if(pname)updates.parentName=pname;
+      if(pphone)updates.parentPhone=pphone;
+      if(ename)updates.emergencyName=ename;
+      if(ephone)updates.emergencyPhone=ephone;
+      if(medical)updates.medicalNotes=medical;
+      if(Object.keys(updates).length>0){
+        try{await updateDoc(doc(db,"settings",settingId,"children",childId),updates);}catch(e){}
+      }
+    }
+    renderParentHome();
+  };
+  $("#saveprofile").onclick=()=>save(false);
+  $("#skipprofile").onclick=()=>save(true);
+}
+
+/* ── minder home ── */
+function renderMinderHome(){
+  clearSubs();
+  state.activeChildId=null;state.currentTab=null;
+  app.innerHTML=`
+    <div class="topbar">
+      <button class="back" id="out">Sign out</button>
+      <h1 style="font-size:30px;color:var(--violet);margin-top:6px">Today</h1>
+      <p class="muted" style="margin:2px 0 0;font-weight:600" id="sub">Loading…</p>
+    </div>
+    <div class="screen" style="padding-top:6px" id="list"><div class="spin"></div></div>
+    <button class="fab" id="add">＋ Add child</button>`;
+  $("#out").onclick=()=>signOut(auth);
+  $("#add").onclick=openAddChild;
+  const q=query(collection(db,"settings",state.settingId,"children"),orderBy("createdAt"));
+  subs.push(onSnapshot(q,snap=>{
+    $("#sub").textContent=`${snap.size} ${snap.size===1?"child":"children"} in today`;
+    initAlerts("minder",state.settingId,snap.docs.map(d=>d.id));
+    if(snap.empty){$("#list").innerHTML=`<p class="muted center" style="padding:46px 0">No children yet.<br>Tap "Add child" to begin.</p>`;return;}
+    $("#list").innerHTML=snap.docs.map(d=>{
+      const c=d.data();
+      const uc=unread[d.id]||0;
+      return `<button class="card row fade" style="width:100%;padding:13px;border:1px solid var(--line);background:#fff;text-align:left" data-id="${d.id}">
+        <div class="avatar" style="background:${c.colour||'#6C4AE2'}">${esc((c.name||"?")[0])}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:800;font-size:17px">${esc(c.name)}</div>
+          <div class="muted" style="font-size:12.5px">${esc(c.dob||"")}${c.setupCode?` · Code: <span style="font-family:monospace;color:var(--gold)">${esc(c.setupCode)}</span>`:""}${c.parentName?` · <span style="color:var(--ink)">${esc(c.parentName)}</span>`:""}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span data-badge="${d.id}">${uc>0?`<span class="badge">${uc}</span>`:""}</span>
+          <span class="muted" style="font-size:22px">›</span>
+        </div></button>`;
+    }).join("");
+    $("#list").querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>{
+      const d=snap.docs.find(x=>x.id===b.dataset.id);
+      openChild(b.dataset.id,d.data(),true);
+    });
+  },err=>{$("#list").innerHTML=`<p class="err">${esc(err.message)}</p>`;}));
+}
+
+/* ── add child ── */
+function openAddChild(){
+  const sheet=mountSheet("Add a child",`
+    <div class="field-row"><div class="field-label">Child's name</div><input id="cn" placeholder="e.g. Evie Harper"></div>
+    <div class="field-row"><div class="field-label">Date of birth or age</div><input id="dob" placeholder="e.g. 2y 4m or 12/03/2022"></div>
+    <p class="muted" style="font-size:12.5px;line-height:1.5;margin:0 0 18px">A unique code is generated automatically. Share it with the parent — they enter it when they sign up and are instantly linked.</p>
+    <button class="btn btn-primary" id="save">Add child &amp; generate code</button>`);
+  $("#save").onclick=async()=>{
+    const name=$("#cn").value.trim();if(!name)return;
+    $("#save").disabled=true;$("#save").textContent="Adding…";
+    const code="LN-"+Math.random().toString(36).substring(2,6).toUpperCase();
+    const colour=COLOURS[Math.floor(Math.random()*COLOURS.length)];
+    const childRef=await addDoc(collection(db,"settings",state.settingId,"children"),{name,dob:$("#dob").value.trim(),colour,parentEmails:[],parentUids:[],setupCode:code,createdAt:serverTimestamp()});
+    await setDoc(doc(db,"invites",code),{settingId:state.settingId,childId:childRef.id,childName:name,status:"pending",createdAt:serverTimestamp()});
+    sheet.remove();
+  };
+}
+
+/* ── parent home ── */
+async function renderParentHome(){
+  clearSubs();
+  state.activeChildId=null;state.currentTab=null;
+  app.innerHTML='<div class="spin"></div>';
+  try{
+    const ids=state.profile.childIds||[];
+    const kids=[];
+    for(const id of ids){
+      const s=await getDoc(doc(db,"settings",state.settingId,"children",id));
+      if(s.exists())kids.push({id,...s.data()});
+    }
+    if(kids.length===1){openChild(kids[0].id,kids[0],false);return;}
+    app.innerHTML=`
+      <div class="topbar"><button class="back" id="out">Sign out</button>
+        <h1 style="font-size:30px;color:var(--violet);margin-top:6px">My children</h1></div>
+      <div class="screen" style="padding-top:6px" id="list"></div>`;
+    $("#out").onclick=()=>signOut(auth);
+    $("#list").innerHTML=kids.map(c=>`
+      <button class="card row" style="width:100%;padding:13px;border:1px solid var(--line);background:#fff;text-align:left" data-id="${c.id}">
+        <div class="avatar" style="background:${c.colour||'#6C4AE2'}">${esc((c.name||"?")[0])}</div>
+        <div style="flex:1"><div style="font-weight:800;font-size:17px">${esc(c.name)}</div></div>
+        <span class="muted" style="font-size:22px">›</span></button>`).join("");
+    $("#list").querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>{
+      const c=kids.find(x=>x.id===b.dataset.id);openChild(c.id,c,false);
+    });
+  }catch(e){app.innerHTML=`<div class="splash"><p class="err">${esc(e.message)}</p></div>`;}
+}
+
+/* ── child detail ── */
+function openChild(childId,child,admin,forcedTab=null){
+  clearSubs();
+  let tab=forcedTab||"diary";
+  state.activeChildId=childId;state.currentTab=tab;
+  if(admin&&unread[childId]&&tab==="chat"){unread[childId]=0;refreshDashboardBadge(childId);}
+  const base=["settings",state.settingId,"children",childId];
+  const tabs=admin
+    ?[{k:"diary",l:"Diary"},{k:"journey",l:"Journey"},{k:"messages",l:"Messages"},{k:"profile",l:"Profile"}]
+    :[{k:"diary",l:"Diary"},{k:"journey",l:"Journey"},{k:"messages",l:"Messages"},{k:"profile",l:"My details"}];
+
+  app.innerHTML=`
+    <div class="topbar">
+      <button class="back" id="back">‹ ${admin?"All children":"My children"}</button>
+      <h1 style="font-size:30px;color:${child.colour||'var(--violet)'};margin-top:6px">${esc(child.name)}</h1>
+      <p class="muted" style="margin:2px 0 0;font-weight:600">${admin?"Childminder view":"Today"}</p>
+    </div>
+    <div class="tabs">${tabs.map(t=>`<button class="tab${tab===t.k?" on":""}" data-t="${t.k}">${t.l}</button>`).join("")}</div>
+    <div id="body" class="screen" style="padding-top:0"></div>
+    <div id="fabwrap"></div>`;
+
+  $("#back").onclick=()=>{
+    if(admin)renderMinderHome();else renderParentHome();
+  };
+  app.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+    tab=t.dataset.t;state.currentTab=tab;
+    if(admin&&tab==="messages"){unread[childId]=0;refreshDashboardBadge(childId);}
+    app.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===t));
+    mount();
+  });
+  mount();
+
+  function mount(){
+    clearSubs();
+    const body=$("#body"),fw=$("#fabwrap");fw.innerHTML="";
+    if(tab==="diary")    mountDiary(body,fw);
+    if(tab==="journey")  mountJourney(body,fw);
+    if(tab==="messages") mountChat(body);
+    if(tab==="profile")  mountProfile(body,admin,childId,child);
+  }
+
+  /* diary */
+  function mountDiary(body,fw){
+    body.innerHTML='<div id="d"><div class="spin"></div></div>';
+    const q=query(collection(db,...base,"entries"),orderBy("createdAt","desc"));
+    subs.push(onSnapshot(q,s=>{
+      const del=admin?`<button class="btn btn-danger" id="del">🗑️ Delete ${esc(child.name)}'s profile</button>`:"";
+      $("#d").innerHTML=(s.empty?`<p class="muted center" style="padding:46px 0">No updates yet today.</p>`:s.docs.map(d=>entryCard(d.data())).join(""))+del;
+      if(admin){
+        const db_=$('#del');if(!db_)return;
+        db_.onclick=async()=>{
+          if(!confirm(`Permanently delete ${child.name}'s profile and all records?`))return;
+          db_.disabled=true;db_.textContent="Deleting…";
+          try{
+            await deleteDoc(doc(db,"settings",state.settingId,"children",childId));
+            if(child.setupCode)await deleteDoc(doc(db,"invites",child.setupCode));
+            renderMinderHome();
+          }catch(e){alert(e.message);db_.disabled=false;db_.textContent=`🗑️ Delete ${child.name}'s profile`;}
+        };
+      }
+    }));
+    if(admin){fw.innerHTML=`<button class="fab" id="addE">＋ Add update</button>`;$("#addE").onclick=()=>openDiaryComposer(base,child.name,childId);}
+  }
+
+  /* journey */
+  function mountJourney(body,fw){
+    body.innerHTML=`${admin?"":`<p class="muted" style="font-size:13px;margin:4px 0 14px;line-height:1.4">${esc(child.name)}'s learning journey — captured against the EYFS areas of learning.</p>`}<div id="j"><div class="spin"></div></div>`;
+    const q=query(collection(db,...base,"observations"),orderBy("createdAt","desc"));
+    subs.push(onSnapshot(q,s=>{
+      if(s.empty){$("#j").innerHTML=`<p class="muted center" style="padding:46px 0">No observations yet.</p>`;return;}
+      $("#j").innerHTML=s.docs.map(d=>obsCard(d.data())).join("");
+    }));
+    if(admin){fw.innerHTML=`<button class="fab" id="addO">＋ New observation</button>`;$("#addO").onclick=()=>openObsComposer(base);}
+  }
+
+  /* chat */
+  function mountChat(body){
+    body.innerHTML=`<div id="c" style="padding-bottom:70px"><div class="spin"></div></div>
+      <div class="chatbar"><input id="msg" placeholder="Message…"><button class="btn btn-primary" id="send" style="width:auto;margin:0;padding:11px 20px">Send</button></div>`;
+    const q=query(collection(db,...base,"messages"),orderBy("createdAt"));
+    const me=admin?"fran":"parent";
+    subs.push(onSnapshot(q,s=>{
+      $("#c").innerHTML=s.empty?`<p class="muted center" style="padding:46px 0">No messages yet.</p>`:
+        s.docs.map(d=>{const m=d.data(),mine=m.from===me;
+          return `<div style="display:flex;justify-content:${mine?"flex-end":"flex-start"};margin-bottom:8px">
+            <div class="bubble" style="background:${mine?"var(--violet)":"#fff"};color:${mine?"#fff":"var(--ink)"};${mine?"":"border:1px solid var(--line)"}">${esc(m.text)}<div class="t">${fmtTime(m.createdAt)}</div></div></div>`;
+        }).join("");
+      $("#c").scrollTop=1e9;
+    }));
+    const send=async()=>{const v=$("#msg").value.trim();if(!v)return;$("#msg").value="";
+      await addDoc(collection(db,...base,"messages"),{from:me,text:v,createdAt:serverTimestamp()});};
+    $("#send").onclick=send;
+    $("#msg").onkeydown=e=>{if(e.key==="Enter")send();};
+  }
+
+  /* profile tab */
+  function mountProfile(body,admin,childId,child){
+    const phone=child.parentPhone||"";
+    const waPhone=phoneForWA(phone);
+
+    if(admin){
+      // Minder sees parent's details
+      body.innerHTML=`
+        <div class="info-card">
+          <div class="title">👤 Parent details</div>
+          <div class="info-row"><span class="label">Name</span><span class="value">${esc(child.parentName||"Not provided")}</span></div>
+          <div class="info-row"><span class="label">Mobile</span><span class="value">${esc(child.parentPhone||"Not provided")}</span></div>
+          <div class="info-row"><span class="label">Email</span><span class="value">${esc((child.parentEmails||[])[0]||"")}</span></div>
+        </div>
+        <div class="info-card">
+          <div class="title">🚨 Emergency contact</div>
+          <div class="info-row"><span class="label">Name</span><span class="value">${esc(child.emergencyName||"Not provided")}</span></div>
+          <div class="info-row"><span class="label">Phone</span><span class="value">${esc(child.emergencyPhone||"Not provided")}</span></div>
+        </div>
+        ${child.medicalNotes?`<div class="info-card"><div class="title">🏥 Medical notes</div><p style="font-size:14px;line-height:1.5;margin:4px 0">${esc(child.medicalNotes)}</p></div>`:""}
+        ${waPhone?`<button class="btn btn-green" id="wa" style="margin-top:8px">💬 WhatsApp ${esc(child.parentName||"parent")}</button>`:`<p class="muted center" style="font-size:13px;margin-top:16px">Parent hasn't added their mobile yet.</p>`}`;
+      if(waPhone){
+        $("#wa").onclick=()=>{
+          const msg=`Hi ${child.parentName||""}! Just a quick update from LittleNest 🪺`;
+          window.open(`https://wa.me/${waPhone}?text=${encodeURIComponent(msg)}`,"_blank");
+        };
+      }
+    } else {
+      // Parent sees and can edit their own details
+      const uid=auth.currentUser?.uid;
+      body.innerHTML=`
+        <div style="margin-bottom:16px">
+          <div class="field-label">Your name</div>
+          <input id="pname" value="${esc(child.parentName||"")}" placeholder="Full name">
+        </div>
+        <div style="margin-bottom:16px">
+          <div class="field-label">Your mobile</div>
+          <input id="pphone" type="tel" value="${esc(child.parentPhone||"")}" placeholder="07700 900123">
+        </div>
+        <div style="margin-bottom:16px">
+          <div class="field-label">Emergency contact name</div>
+          <input id="ename" value="${esc(child.emergencyName||"")}" placeholder="Name">
+        </div>
+        <div style="margin-bottom:16px">
+          <div class="field-label">Emergency contact number</div>
+          <input id="ephone" type="tel" value="${esc(child.emergencyPhone||"")}" placeholder="07700 900456">
+        </div>
+        <div style="margin-bottom:20px">
+          <div class="field-label">Medical notes</div>
+          <textarea id="medical" rows="3" placeholder="Allergies, medication, GP details…">${esc(child.medicalNotes||"")}</textarea>
+        </div>
+        <button class="btn btn-primary" id="savedet">Save details</button>`;
+      $("#savedet").onclick=async()=>{
+        const btn=$("#savedet");btn.disabled=true;btn.textContent="Saving…";
+        try{
+          await updateDoc(doc(db,"settings",state.settingId,"children",childId),{
+            parentName:$("#pname").value.trim(),
+            parentPhone:$("#pphone").value.trim(),
+            emergencyName:$("#ename").value.trim(),
+            emergencyPhone:$("#ephone").value.trim(),
+            medicalNotes:$("#medical").value.trim()
+          });
+          btn.textContent="✓ Saved";
+          setTimeout(()=>{btn.disabled=false;btn.textContent="Save details";},2000);
+          // Update local child object so minder sees fresh data on next profile view
+          child.parentName=$("#pname").value.trim();
+          child.parentPhone=$("#pphone").value.trim();
+        }catch(e){btn.disabled=false;btn.textContent="Save details";alert(e.message);}
+      };
+    }
+  }
+}
+
+/* ── cards ── */
+function entryCard(e){
+  const t=TYPES[e.type]||TYPES.note;
+  return `<div class="card fade"><div style="padding:14px;display:flex;gap:12px">
+    <div class="iconbox" style="background:${t.tint}">${t.icon}</div>
+    <div style="flex:1">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <span style="font-weight:800;font-size:14px">${t.label}</span>
+        <span class="muted" style="font-size:12px;font-weight:700">${fmtTime(e.createdAt)}</span>
+      </div>
+      ${e.detail?`<div style="font-size:14.5px;line-height:1.45;margin-top:2px">${esc(e.detail)}</div>`:""}
+    </div></div></div>`;
+}
+function obsCard(o){
+  return `<div class="card fade"><div style="padding:16px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+      <span style="font-family:'Fraunces',serif;font-weight:600;font-size:18px">${esc(o.title)}</span>
+      <span class="muted" style="font-size:12px;font-weight:700">${fmtDate(o.createdAt)}</span>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">${(o.areas||[]).map(areaTag).join("")}</div>
+    <div style="font-size:14.5px;line-height:1.5">${esc(o.note)}</div>
+    ${o.nextSteps?`<div class="next"><div class="lbl">Next steps</div><div style="font-size:13.5px;line-height:1.45">${esc(o.nextSteps)}</div></div>`:""}
+  </div></div>`;
+}
+function areaTag(a){const x=AREAS[a];if(!x)return"";
+  return `<span class="areatag" style="background:${x.colour}22"><span class="dot" style="background:${x.colour}"></span>${x.short}</span>`;}
+
+/* ── composers ── */
+function openDiaryComposer(base,childName,childId){
+  let type="meal";
+  // Get parent phone from child doc for WhatsApp
+  let parentPhone=null;
+  getDoc(doc(db,...base.slice(0,-2),...base.slice(-2))).then(s=>{if(s.exists())parentPhone=s.data().parentPhone;}).catch(()=>{});
+  // Actually base is ["settings",sid,"children",cid] so:
+  getDoc(doc(db,"settings",state.settingId,"children",childId)).then(s=>{if(s.exists())parentPhone=s.data().parentPhone;}).catch(()=>{});
+
+  const sheet=mountSheet("New update",`
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px" id="types">
+      ${Object.entries(TYPES).map(([k,v])=>`<button class="chip${k==="meal"?" on":""}" data-k="${k}">${v.icon} ${v.label}</button>`).join("")}
+    </div>
+    <textarea id="detail" rows="3" placeholder="What happened? e.g. Had a big lunch and went down well for a nap…"></textarea>
+    <div class="green-box">
+      <input type="checkbox" id="wa" style="width:auto;cursor:pointer">
+      <label for="wa" style="font-size:13.5px;font-weight:700;color:var(--green);cursor:pointer">📢 Also alert via WhatsApp</label>
+    </div>
+    <button class="btn btn-primary" id="save">Post to parent</button>`);
+  sheet.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{type=c.dataset.k;sheet.querySelectorAll(".chip").forEach(x=>x.classList.toggle("on",x===c));});
+  $("#save").onclick=async()=>{
+    const detail=$("#detail").value.trim();if(!detail)return;
+    $("#save").disabled=true;$("#save").textContent="Posting…";
+    await addDoc(collection(db,...base,"entries"),{type,detail,createdAt:serverTimestamp()});
+    if($("#wa").checked){
+      const msg=`Hi! New ${TYPES[type]?.label||"update"} for ${childName} on LittleNest ${TYPES[type]?.icon||"📝"}\n\n"${detail}"`;
+      const waNum=phoneForWA(parentPhone);
+      const url=waNum?`https://wa.me/${waNum}?text=${encodeURIComponent(msg)}`:`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
+      window.open(url,"_blank");
+    }
+    sheet.remove();
+  };
+}
+
+function openObsComposer(base){
+  let areas=[];
+  const sheet=mountSheet("New observation",`
+    <div class="field-row"><input id="title" placeholder="Title — e.g. Building a tall tower"></div>
+    <div class="field-row"><textarea id="note" rows="4" placeholder="What did you see? Describe the moment…"></textarea></div>
+    <div class="field-label" style="margin-bottom:8px">EYFS areas of learning</div>
+    <div id="areas" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px">
+      ${Object.entries(AREAS).map(([k,v])=>`<button class="chip" data-k="${k}"><span class="dot" style="background:${v.colour};margin-right:6px;vertical-align:middle"></span>${v.short}${v.prime?'<span class="muted" style="font-weight:600"> ·prime</span>':""}</button>`).join("")}
+    </div>
+    <div class="field-row"><textarea id="next" rows="2" placeholder="Next steps (optional) — how will you extend this?"></textarea></div>
+    <button class="btn btn-gold" id="save">Save to journey</button>`);
+  sheet.querySelectorAll("#areas .chip").forEach(c=>c.onclick=()=>{
+    const k=c.dataset.k;
+    if(areas.includes(k)){areas=areas.filter(x=>x!==k);c.classList.remove("on");}
+    else{areas.push(k);c.classList.add("on");}
+  });
+  $("#save").onclick=async()=>{
+    const title=$("#title").value.trim(),note=$("#note").value.trim();
+    if(!title||!note||!areas.length){alert("Add a title, a note and at least one EYFS area.");return;}
+    $("#save").disabled=true;$("#save").textContent="Saving…";
+    await addDoc(collection(db,...base,"observations"),{title,note,areas,nextSteps:$("#next").value.trim(),createdAt:serverTimestamp()});
+    sheet.remove();
+  };
+}
+
+function mountSheet(title,inner){
+  const bd=document.createElement("div");bd.className="backdrop";
+  bd.innerHTML=`<div class="sheet fade"><div class="grab"></div><h3 style="font-size:23px;margin-bottom:16px">${title}</h3>${inner}</div>`;
+  bd.onclick=e=>{if(e.target===bd)bd.remove();};
+  document.body.appendChild(bd);
+  return bd;
+}
+</script>
+</body>
+</html>
