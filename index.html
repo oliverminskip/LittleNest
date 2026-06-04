@@ -9,22 +9,19 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/512/nest.png" />
-
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#F6F3FC; --card:#FFFFFF; --ink:#241B33; --sub:#7E7591;
-    --violet:#6C4AE2; --violetDeep:#5436C4; --lilac:#EEE8FB; --line:#ECE6F5;
-    --gold:#C99A3C; --danger:#C0455B;
+    --bg:#F6F3FC;--card:#FFFFFF;--ink:#241B33;--sub:#7E7591;
+    --violet:#6C4AE2;--violetDeep:#5436C4;--lilac:#EEE8FB;--line:#ECE6F5;
+    --gold:#C99A3C;--danger:#C0455B;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;}
-  body{
-    font-family:'Nunito',system-ui,sans-serif;color:var(--ink);background:var(--bg);
-    background-image:radial-gradient(900px 380px at 50% -8%, rgba(108,74,226,.16), transparent);
-  }
+  body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);background:var(--bg);
+    background-image:radial-gradient(900px 380px at 50% -8%,rgba(108,74,226,.16),transparent);}
   #app{max-width:480px;margin:0 auto;min-height:100vh;position:relative;}
   h1,h2,h3{font-family:'Fraunces',serif;font-weight:600;letter-spacing:-.4px;margin:0;}
   button{font-family:inherit;cursor:pointer;}
@@ -37,72 +34,54 @@
   .center{text-align:center;}
   .card{background:var(--card);border:1px solid var(--line);border-radius:18px;margin-bottom:12px;
     box-shadow:0 1px 2px rgba(36,27,51,.04);overflow:hidden;}
-  .btn{display:block;width:100%;margin:0 0 12px;padding:15px 18px;border-radius:16px;border:none;
-    font-size:16px;font-weight:800;}
+  .btn{display:block;width:100%;margin:0 0 12px;padding:15px 18px;border-radius:16px;border:none;font-size:16px;font-weight:800;}
   .btn-primary{background:var(--violet);color:#fff;box-shadow:0 8px 22px rgba(108,74,226,.28);}
   .btn-gold{background:var(--gold);color:#fff;}
   .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
   .btn-danger{background:none;color:var(--danger);border:1px solid rgba(192,69,91,0.2);margin-top:24px;}
-  .btn-danger:hover{background:rgba(192,69,91,0.05);}
   .btn[disabled]{opacity:.5;}
   .row{display:flex;align-items:center;gap:13px;}
-  .avatar{width:46px;height:46px;border-radius:14px;color:#fff;display:flex;align-items:center;
-    justify-content:center;font-weight:800;font-size:20px;flex-shrink:0;}
+  .avatar{width:46px;height:46px;border-radius:14px;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;flex-shrink:0;}
   .topbar{position:sticky;top:0;background:var(--bg);z-index:5;padding:20px 20px 12px;}
   .back{background:none;border:none;color:var(--sub);font-weight:700;font-size:13px;padding:0;}
   .tabs{display:flex;gap:6px;padding:0 20px 12px;}
-  .tab{flex:1;padding:9px 0;border-radius:12px;border:none;font-weight:800;font-size:13.5px;
-    background:#fff;color:var(--sub);box-shadow:inset 0 0 0 1px var(--line);}
+  .tab{flex:1;padding:9px 0;border-radius:12px;border:none;font-weight:800;font-size:13.5px;background:#fff;color:var(--sub);box-shadow:inset 0 0 0 1px var(--line);}
   .tab.on{background:var(--ink);color:#fff;box-shadow:none;}
-  .chip{padding:8px 13px;border-radius:20px;border:1px solid var(--line);background:#fff;
-    color:var(--ink);font-weight:700;font-size:13px;}
+  .chip{padding:8px 13px;border-radius:20px;border:1px solid var(--line);background:#fff;color:var(--ink);font-weight:700;font-size:13px;}
   .chip.on{border:1.5px solid var(--violet);background:var(--lilac);color:var(--violetDeep);}
-  .fab{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;
-    border:none;border-radius:30px;padding:14px 26px;font-size:15px;font-weight:800;
-    box-shadow:0 8px 24px rgba(36,27,51,.3);z-index:20;}
-  .backdrop{position:fixed;inset:0;background:rgba(36,27,51,.45);display:flex;align-items:flex-end;
-    justify-content:center;z-index:40;}
-  .sheet{width:100%;max-width:480px;background:var(--bg);border-radius:24px 24px 0 0;
-    padding:16px 20px 28px;max-height:92vh;overflow-y:auto;}
+  .fab{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;border:none;border-radius:30px;padding:14px 26px;font-size:15px;font-weight:800;box-shadow:0 8px 24px rgba(36,27,51,.3);z-index:20;}
+  .backdrop{position:fixed;inset:0;background:rgba(36,27,51,.45);display:flex;align-items:flex-end;justify-content:center;z-index:40;}
+  .sheet{width:100%;max-width:480px;background:var(--bg);border-radius:24px 24px 0 0;padding:16px 20px 28px;max-height:92vh;overflow-y:auto;}
   .grab{width:40px;height:4px;background:var(--line);border-radius:4px;margin:0 auto 16px;}
-  .iconbox{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;
-    justify-content:center;font-size:19px;flex-shrink:0;}
-  .areatag{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:8px;
-    font-size:11.5px;font-weight:800;color:#3a3346;}
+  .iconbox{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
+  .areatag{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:8px;font-size:11.5px;font-weight:800;color:#3a3346;}
   .dot{width:7px;height:7px;border-radius:4px;}
   .bubble{max-width:78%;padding:9px 13px;border-radius:16px;font-size:14.5px;line-height:1.4;}
   .bubble .t{font-size:10.5px;opacity:.7;margin-top:3px;text-align:right;}
-  .chatbar{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;padding:14px;
-    background:var(--bg);border-top:1px solid var(--line);display:flex;gap:8px;}
+  .chatbar{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;padding:14px;background:var(--bg);border-top:1px solid var(--line);display:flex;gap:8px;}
   .err{color:var(--danger);font-size:13.5px;font-weight:700;margin:4px 0 12px;}
   .next{margin-top:12px;padding:12px;border-radius:12px;background:#FBF4E3;border-left:3px solid var(--gold);}
   .next .lbl{font-size:11px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;}
   .splash{padding:74px 28px;text-align:center;}
-  .mark{width:66px;height:66px;border-radius:21px;background:linear-gradient(145deg,#7C5CE6,#5436C4);
-    margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:32px;
-    box-shadow:0 12px 34px rgba(84,54,196,.4);}
+  .mark{width:66px;height:66px;border-radius:21px;background:linear-gradient(145deg,#7C5CE6,#5436C4);margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:32px;box-shadow:0 12px 34px rgba(84,54,196,.4);}
   .fade{animation:rise .35s ease both;}
   @keyframes rise{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
-  .spin{width:30px;height:30px;border:3px solid var(--line);border-top-color:var(--violet);
-    border-radius:50%;animation:sp .8s linear infinite;margin:80px auto;}
+  .spin{width:30px;height:30px;border:3px solid var(--line);border-top-color:var(--violet);border-radius:50%;animation:sp .8s linear infinite;margin:80px auto;}
   @keyframes sp{to{transform:rotate(360deg);}}
-
-  /* Real-Time Toast Banner Style */
-  .toast-banner{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-100px);
+  .toast-banner{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-200px);
     width:calc(100% - 32px);max-width:440px;background:var(--ink);color:#fff;padding:14px 16px;
     border-radius:16px;box-shadow:0 12px 32px rgba(36,27,51,0.24);z-index:999;display:flex;
-    align-items:center;gap:12px;transition:transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);cursor:pointer;}
+    align-items:center;gap:12px;transition:transform 0.4s cubic-bezier(0.175,0.885,0.32,1.275);cursor:pointer;}
   .toast-banner.show{transform:translateX(-50%) translateY(0);}
 </style>
 </head>
 <body>
 <div id="app"><div class="spin"></div></div>
-
 <div id="toast" class="toast-banner">
   <div style="font-size:22px" id="toast-icon">💬</div>
   <div style="flex:1">
     <div style="font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:0.5px;color:rgba(255,255,255,0.7)" id="toast-title">New Update</div>
-    <div style="font-size:14.5px;font-weight:600;margin-top:1px" id="toast-body">Loading notification...</div>
+    <div style="font-size:14.5px;font-weight:600;margin-top:1px" id="toast-body"></div>
   </div>
 </div>
 
@@ -112,8 +91,7 @@ import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword,
   signInWithEmailAndPassword, signOut, updateProfile }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc,
-  collection, collectionGroup, query, where, orderBy, onSnapshot,
-  serverTimestamp, arrayUnion }
+  collection, query, orderBy, onSnapshot, serverTimestamp, arrayUnion }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -124,148 +102,107 @@ const firebaseConfig = {
   appId: "1:8804693290:web:cbd50128a876a043c79a53"
 };
 
-const fb = initializeApp(firebaseConfig);
+const fb  = initializeApp(firebaseConfig);
 const auth = getAuth(fb);
-const db = getFirestore(fb);
+const db   = getFirestore(fb);
 
-/* ---------- constants ---------- */
 const AREAS = {
-  cl:  {short:"C&L", label:"Communication & Language",     prime:true,  colour:"#7FA8C9"},
-  pd:  {short:"PD",  label:"Physical Development",         prime:true,  colour:"#C26B4E"},
-  psed:{short:"PSED",label:"Personal, Social & Emotional", prime:true,  colour:"#D9A441"},
-  lit: {short:"Lit", label:"Literacy",                     prime:false, colour:"#8E6BA8"},
+  cl:  {short:"C&L",  label:"Communication & Language",    prime:true,  colour:"#7FA8C9"},
+  pd:  {short:"PD",   label:"Physical Development",        prime:true,  colour:"#C26B4E"},
+  psed:{short:"PSED", label:"Personal, Social & Emotional",prime:true,  colour:"#D9A441"},
+  lit: {short:"Lit",  label:"Literacy",                    prime:false, colour:"#8E6BA8"},
   ma:  {short:"Maths",label:"Mathematics",                 prime:false, colour:"#5B9A8B"},
-  utw: {short:"UtW", label:"Understanding the World",      prime:false, colour:"#A8924E"},
-  ead: {short:"EAD", label:"Expressive Arts & Design",     prime:false, colour:"#C76B8A"},
+  utw: {short:"UtW",  label:"Understanding the World",     prime:false, colour:"#A8924E"},
+  ead: {short:"EAD",  label:"Expressive Arts & Design",    prime:false, colour:"#C76B8A"},
 };
 const TYPES = {
-  meal:    {label:"Meal",     icon:"🍽️", tint:"#EEE8FB"},
-  nap:     {label:"Nap",      icon:"😴", tint:"#E4ECF4"},
-  nappy:   {label:"Nappy",    icon:"🧷", tint:"#EDE6F4"},
-  activity:{label:"Activity", icon:"🧩", tint:"#E5F1E6"},
-  mood:    {label:"Mood",     icon:"😊", tint:"#FBF1DC"},
-  note:    {label:"Note",     icon:"📝", tint:"#F2ECE6"},
+  meal:    {label:"Meal",     icon:"🍽️",tint:"#EEE8FB"},
+  nap:     {label:"Nap",      icon:"😴",tint:"#E4ECF4"},
+  nappy:   {label:"Nappy",    icon:"🧷",tint:"#EDE6F4"},
+  activity:{label:"Activity", icon:"🧩",tint:"#E5F1E6"},
+  mood:    {label:"Mood",     icon:"😊",tint:"#FBF1DC"},
+  note:    {label:"Note",     icon:"📝",tint:"#F2ECE6"},
 };
 const COLOURS = ["#6C4AE2","#5B7B6F","#C26B4E","#9A7BB0","#D9A441","#5B9A8B"];
 
-/* ---------- helpers ---------- */
-const $ = (s,r=document)=>r.querySelector(s);
-const app = $("#app");
-const esc = s=>(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const $    = (s,r=document)=>r.querySelector(s);
+const app  = $("#app");
+const esc  = s=>(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const fmtTime = ts=>{ const d=ts?.toDate?ts.toDate():new Date(); return d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}); };
 const fmtDate = ts=>{ const d=ts?.toDate?ts.toDate():new Date(); const t=new Date();
   if(d.toDateString()===t.toDateString())return"Today";
   return d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"}); };
 
-/* ---------- state ---------- */
-let state = {profile:null, settingId:null, activeChildId:null, currentTab:null};
-let subs = [];
-let crossFeedSubs = [];
-const clearSubs = ()=>{ subs.forEach(u=>u&&u()); subs=[]; };
+let state = {profile:null,settingId:null,activeChildId:null,currentTab:null};
+let subs = [], crossFeedSubs = [];
+const clearSubs      = ()=>{ subs.forEach(u=>u&&u()); subs=[]; };
 const clearCrossSubs = ()=>{ crossFeedSubs.forEach(u=>u&&u()); crossFeedSubs=[]; };
 
-/* ============================================================
-   GLOBAL REAL-TIME PUSH ALERTS (FAMLY STYLE)
-   ============================================================ */
-function initCrossTabNotifications(role, settingId, childIds = []) {
-  clearCrossSubs();
-  
-  if (role === "minder") {
-    // Minder listens globally for incoming chat messages from any child profile
-    childIds.forEach(cid => {
-      const q = query(collection(db, "settings", settingId, "children", cid, "messages"), orderBy("createdAt", "desc"));
-      let initialLoad = true;
-      crossFeedSubs.push(onSnapshot(q, snap => {
-        if (initialLoad) { initialLoad = false; return; }
-        if (!snap.empty && snap.docs[0].data().from === "parent") {
-          const msg = snap.docs[0].data();
-          if (state.activeChildId === cid && state.currentTab === "chat") return; // mute if already looking
-          triggerInAppToast("💬 Message Received", msg.text, () => {
-            getDoc(doc(db, "settings", settingId, "children", cid)).then(sSnap => {
-              if (sSnap.exists()) openChild(cid, sSnap.data(), true, "chat");
-            });
-          });
-        }
-      }));
-    });
-  } else if (role === "parent") {
-    // Parents listen globally for new diary entries or chat messages
-    childIds.forEach(cid => {
-      // 1. Listen for new text messages
-      const qMsg = query(collection(db, "settings", settingId, "children", cid, "messages"), orderBy("createdAt", "desc"));
-      let initMsg = true;
-      crossFeedSubs.push(onSnapshot(qMsg, snap => {
-        if (initMsg) { initMsg = false; return; }
-        if (!snap.empty && snap.docs[0].data().from === "fran") {
-          if (state.activeChildId === cid && state.currentTab === "chat") return;
-          triggerInAppToast("💬 New Message from Fran", snap.docs[0].data().text, () => {
-            getDoc(doc(db, "settings", settingId, "children", cid)).then(sSnap => {
-              if (sSnap.exists()) openChild(cid, sSnap.data(), false, "chat");
-            });
-          });
-        }
-      }));
-
-      // 2. Listen for diary entry items
-      const qDiary = query(collection(db, "settings", settingId, "children", cid, "entries"), orderBy("createdAt", "desc"));
-      let initDiary = true;
-      crossFeedSubs.push(onSnapshot(qDiary, snap => {
-        if (initDiary) { initDiary = false; return; }
-        if (!snap.empty) {
-          const entry = snap.docs[0].data();
-          if (state.activeChildId === cid && state.currentTab === "diary") return;
-          const label = TYPES[entry.type]?.label || "Update";
-          const icon = TYPES[entry.type]?.icon || "📝";
-          triggerInAppToast(`${icon} New Diary ${label}`, entry.detail, () => {
-            getDoc(doc(db, "settings", settingId, "children", cid)).then(sSnap => {
-              if (sSnap.exists()) openChild(cid, sSnap.data(), false, "diary");
-            });
-          });
-        }
-      }));
-    });
-  }
-}
-
-function triggerInAppToast(title, body, onClickAction) {
-  const t = $("#toast");
-  $("#toast-title").textContent = title;
-  $("#toast-body").textContent = body.length > 55 ? body.substring(0, 52) + "..." : body;
-  
+/* ---- toast ---- */
+function toast(title, body, onClick){
+  const t=$("#toast");
+  $("#toast-title").textContent=title;
+  $("#toast-body").textContent=body.length>55?body.slice(0,52)+"...":body;
   t.classList.add("show");
-  t.onclick = () => { t.classList.remove("show"); if(onClickAction) onClickAction(); };
-  
-  setTimeout(() => { t.classList.remove("show"); }, 5500);
+  t.onclick=()=>{ t.classList.remove("show"); onClick&&onClick(); };
+  setTimeout(()=>t.classList.remove("show"),5500);
 }
 
-/* ============================================================
-   AUTH GATE
-   ============================================================ */
-onAuthStateChanged(auth, async user=>{
+/* ---- cross-tab realtime alerts ---- */
+function initAlerts(role,settingId,childIds=[]){
+  clearCrossSubs();
+  childIds.forEach(cid=>{
+    const base=["settings",settingId,"children",cid];
+    const qMsg=query(collection(db,...base,"messages"),orderBy("createdAt","desc"));
+    let im=true;
+    crossFeedSubs.push(onSnapshot(qMsg,s=>{
+      if(im){im=false;return;}
+      if(!s.empty){
+        const m=s.docs[0].data();
+        const fromOther = role==="minder"?m.from==="parent":m.from==="fran";
+        if(fromOther&&!(state.activeChildId===cid&&state.currentTab==="chat")){
+          toast("💬 New message",m.text,()=>navChild(cid,settingId,"chat"));
+        }
+      }
+    }));
+    if(role==="parent"){
+      const qD=query(collection(db,...base,"entries"),orderBy("createdAt","desc"));
+      let id=true;
+      crossFeedSubs.push(onSnapshot(qD,s=>{
+        if(id){id=false;return;}
+        if(!s.empty&&!(state.activeChildId===cid&&state.currentTab==="diary")){
+          const e=s.docs[0].data();
+          toast(`${TYPES[e.type]?.icon||"📝"} New diary update`,e.detail||"",()=>navChild(cid,settingId,"diary"));
+        }
+      }));
+    }
+  });
+}
+async function navChild(cid,settingId,tab){
+  const snap=await getDoc(doc(db,"settings",settingId,"children",cid));
+  if(snap.exists()) openChild(cid,snap.data(),state.profile.role==="minder",tab);
+}
+
+/* ---- auth gate ---- */
+onAuthStateChanged(auth,async user=>{
   clearSubs();
-  if(!user){ clearCrossSubs(); renderAuth(); return; }
+  if(!user){clearCrossSubs();renderAuth();return;}
   app.innerHTML=`<div class="spin"></div>`;
-  const snap = await getDoc(doc(db,"users",user.uid));
+  const snap=await getDoc(doc(db,"users",user.uid));
   if(snap.exists()){
     state.profile=snap.data(); state.settingId=state.profile.settingId;
-    
-    // Track cross-tab channels instantly upon login
-    if (state.profile.role === "minder") {
-      getDocs(collection(db, "settings", state.settingId, "children")).then(allKids => {
-        const kIds = allKids.docs.map(dk => dk.id);
-        initCrossTabNotifications("minder", state.settingId, kIds);
-      });
+    if(state.profile.role==="minder"){
+      const kids=await getDocs(collection(db,"settings",state.settingId,"children"));
+      initAlerts("minder",state.settingId,kids.docs.map(d=>d.id));
       renderMinderHome();
     } else {
-      initCrossTabNotifications("parent", state.settingId, state.profile.childIds || []);
+      initAlerts("parent",state.settingId,state.profile.childIds||[]);
       renderParentHome();
     }
   } else { renderOnboarding(user); }
 });
 
-/* ============================================================
-   AUTH SCREEN
-   ============================================================ */
+/* ---- auth screen ---- */
 function renderAuth(mode="in"){
   app.innerHTML=`
     <div class="splash fade">
@@ -283,25 +220,23 @@ function renderAuth(mode="in"){
     </div>`;
   $("#swap").onclick=()=>renderAuth(mode==="up"?"in":"up");
   $("#go").onclick=async()=>{
-    const email=$("#email").value.trim().toLowerCase(), pw=$("#pw").value;
+    const email=$("#email").value.trim().toLowerCase(),pw=$("#pw").value;
     try{
-      if(mode==="up"){ const c=await createUserWithEmailAndPassword(auth,email,pw);
-        const nm=$("#name").value.trim(); if(nm) await updateProfile(c.user,{displayName:nm});
+      if(mode==="up"){const c=await createUserWithEmailAndPassword(auth,email,pw);
+        const nm=$("#name").value.trim();if(nm)await updateProfile(c.user,{displayName:nm});
       } else { await signInWithEmailAndPassword(auth,email,pw); }
-    }catch(e){ $("#err").innerHTML=`<div class="err">${esc(prettyErr(e))}</div>`; }
+    }catch(e){$("#err").innerHTML=`<div class="err">${esc(prettyErr(e))}</div>`;}
   };
 }
 function prettyErr(e){
   const m=(e.code||"").replace("auth/","");
-  return({"invalid-email":"That email doesn't look right.","weak-password":"Password needs to be at least 6 characters.",
+  return({"invalid-email":"That email doesn't look right.","weak-password":"Password needs 6+ characters.",
     "email-already-in-use":"That email already has an account — try signing in.",
     "invalid-credential":"Email or password not recognised.",
     "invalid-login-credentials":"Email or password not recognised."}[m])||e.message;
 }
 
-/* ============================================================
-   ONBOARDING
-   ============================================================ */
+/* ---- onboarding ---- */
 function renderOnboarding(user){
   app.innerHTML=`
     <div class="splash fade">
@@ -323,84 +258,52 @@ function renderOnboarding(user){
         <button class="btn btn-primary" id="create">Create setting</button>
       </div>`;
     $("#create").onclick=async()=>{
-      const name=$("#sn").value.trim(); if(!name)return;
+      const name=$("#sn").value.trim();if(!name)return;
       const ref=await addDoc(collection(db,"settings"),{name,minderUid:user.uid,createdAt:serverTimestamp()});
       await setDoc(doc(db,"users",user.uid),{role:"minder",name:user.displayName||"",email:user.email,settingId:ref.id});
-      state.profile={role:"minder",settingId:ref.id}; state.settingId=ref.id;
+      state.profile={role:"minder",settingId:ref.id};state.settingId=ref.id;
       renderMinderHome();
     };
   };
-  
-  $("#parent").onclick=()=>renderParentLinkInterface(user);
+  $("#parent").onclick=()=>renderParentLink(user);
 }
 
-function renderParentLinkInterface(user, errorMsg = null) {
+function renderParentLink(user,err=null){
   app.innerHTML=`
     <div class="splash fade">
       <h2 style="font-size:26px">Link to your child</h2>
-      <p class="muted" style="margin:10px 0 22px;line-height:1.5">Enter the setup link code provided by your childminder below.</p>
-      <div id="parent-err">${errorMsg ? `<div class="err">${esc(errorMsg)}</div>` : ''}</div>
-      <input id="invcode" placeholder="e.g. LN-X4A2" style="text-align:center;font-family:monospace;font-size:20px;letter-spacing:2px;text-transform:uppercase;">
+      <p class="muted" style="margin:10px 0 22px;line-height:1.5">Enter the setup code your childminder gave you.</p>
+      ${err?`<div class="err">${esc(err)}</div>`:""}
+      <input id="code" placeholder="e.g. LN-X4A2" style="text-align:center;font-family:monospace;font-size:22px;letter-spacing:3px;text-transform:uppercase">
       <div style="height:16px"></div>
-      <button class="btn btn-primary" id="claimcode">Verify &amp; Link Profile</button>
+      <button class="btn btn-primary" id="link">Link my child</button>
       <button class="btn btn-ghost" id="out2" style="color:var(--sub)">Sign out</button>
     </div>`;
-    
   $("#out2").onclick=()=>signOut(auth);
-  $("#claimcode").onclick=async()=>{
-    const code = $("#invcode").value.trim().toUpperCase();
-    if(!code) return;
-    
+  $("#link").onclick=async()=>{
+    const code=$("#code").value.trim().toUpperCase();if(!code)return;
     app.innerHTML=`<div class="spin"></div>`;
-    try {
-      const inviteRef = doc(db, "invites", code);
-      const inviteSnap = await getDoc(inviteRef);
-      
-      if(!inviteSnap.exists()) {
-        renderParentLinkInterface(user, "Code not found. Please double-check it.");
-        return;
-      }
-      
-      const inviteData = inviteSnap.data();
-      if(inviteData.status === "used") {
-        renderParentLinkInterface(user, "This setup code has already been used.");
-        return;
-      }
-      
-      const email = (user.email||"").toLowerCase();
-      const settingId = inviteData.settingId;
-      const childId = inviteData.childId;
-      
-      const childRef = doc(db, "settings", settingId, "children", childId);
-      await updateDoc(childRef, {
-        parentUids: arrayUnion(user.uid),
-        parentEmails: arrayUnion(email)
-      });
-      
-      await updateDoc(inviteRef, {
-        status: "used",
-        usedBy: user.uid,
-        usedAt: serverTimestamp()
-      });
-      
-      const childIds = [childId];
+    try{
+      const invSnap=await getDoc(doc(db,"invites",code));
+      if(!invSnap.exists()){renderParentLink(user,"Code not found — double-check it.");return;}
+      if(invSnap.data().status==="used"){renderParentLink(user,"This code has already been used.");return;}
+      const {settingId,childId}=invSnap.data();
+      const email=(user.email||"").toLowerCase();
+      await updateDoc(doc(db,"settings",settingId,"children",childId),{parentUids:arrayUnion(user.uid),parentEmails:arrayUnion(email)});
+      await updateDoc(doc(db,"invites",code),{status:"used",usedBy:user.uid,usedAt:serverTimestamp()});
+      const childIds=[childId];
       await setDoc(doc(db,"users",user.uid),{role:"parent",name:user.displayName||"",email,settingId,childIds});
-      state.profile={role:"parent",settingId,childIds}; state.settingId=settingId;
-      initCrossTabNotifications("parent", settingId, childIds);
+      state.profile={role:"parent",settingId,childIds};state.settingId=settingId;
+      initAlerts("parent",settingId,childIds);
       renderParentHome();
-      
-    } catch(e) {
-      renderParentLinkInterface(user, e.message);
-    }
+    }catch(e){renderParentLink(user,e.message);}
   };
 }
 
-/* ============================================================
-   MINDER HOME
-   ============================================================ */
+/* ---- minder home ---- */
 function renderMinderHome(){
   clearSubs();
-  state.activeChildId = null; state.currentTab = null;
+  state.activeChildId=null;state.currentTab=null;
   app.innerHTML=`
     <div class="topbar">
       <button class="back" id="out">Sign out</button>
@@ -414,12 +317,8 @@ function renderMinderHome(){
   const q=query(collection(db,"settings",state.settingId,"children"),orderBy("createdAt"));
   subs.push(onSnapshot(q,snap=>{
     $("#sub").textContent=`${snap.size} ${snap.size===1?"child":"children"}`;
-    
-    // Dynamically align notification channels whenever children lists evolve
-    const kIds = snap.docs.map(dk => dk.id);
-    initCrossTabNotifications("minder", state.settingId, kIds);
-
-    if(snap.empty){ $("#list").innerHTML=`<p class="muted center" style="padding:40px 0">No children yet.<br>Tap "Add child" to begin.</p>`; return; }
+    initAlerts("minder",state.settingId,snap.docs.map(d=>d.id));
+    if(snap.empty){$("#list").innerHTML=`<p class="muted center" style="padding:40px 0">No children yet.<br>Tap "Add child" to begin.</p>`;return;}
     $("#list").innerHTML=snap.docs.map(d=>{
       const c=d.data();
       return `<button class="card row fade" style="width:100%;padding:13px;border:1px solid var(--line);background:#fff;text-align:left" data-id="${d.id}">
@@ -427,15 +326,14 @@ function renderMinderHome(){
         <div style="flex:1">
           <div style="font-weight:800;font-size:17px">${esc(c.name)}</div>
           <div class="muted" style="font-size:13px">${esc(c.dob||"")}</div>
-          ${c.setupCode ? `<div style="font-family:monospace;font-size:11px;color:var(--gold);margin-top:2px;font-weight:700">Code: ${esc(c.setupCode)}</div>` : ''}
+          ${c.setupCode?`<div style="font-family:monospace;font-size:11px;color:var(--gold);margin-top:2px;font-weight:700">Code: ${esc(c.setupCode)}</div>`:""}
         </div>
         <span class="muted" style="font-size:22px">›</span></button>`;
     }).join("");
     $("#list").querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>{
-      const d=snap.docs.find(x=>x.id===b.dataset.id);
-      openChild(b.dataset.id,d.data(),true);
+      const d=snap.docs.find(x=>x.id===b.dataset.id);openChild(b.dataset.id,d.data(),true);
     });
-  },err=>{ $("#list").innerHTML=`<p class="err">${esc(err.message)}</p>`; }));
+  },err=>{$("#list").innerHTML=`<p class="err">${esc(err.message)}</p>`;}));
 }
 
 function openAddChild(){
@@ -443,41 +341,11 @@ function openAddChild(){
     <input id="cn" placeholder="Child's name">
     <div style="height:12px"></div>
     <input id="dob" placeholder="Age or date of birth — e.g. 2y 4m">
-    <div style="height:14px"></div>
-    <p class="muted" style="font-size:12px;margin:4px 0 18px;line-height:1.4">Saving will automatically generate a clean link setup code you can hand directly to the parent.</p>
-    <button class="btn btn-primary" id="save">Add child &amp; Generate Code</button>`);
-    
+    <p class="muted" style="font-size:12px;margin:12px 0 18px;line-height:1.4">A unique setup code is generated automatically — share it with the parent to link their account.</p>
+    <button class="btn btn-primary" id="save">Add child &amp; generate code</button>`);
   $("#save").onclick=async()=>{
-    const name=$("#cn").value.trim(); if(!name)return;
+    const name=$("#cn").value.trim();if(!name)return;
     $("#save").disabled=true;
-    
-    const randSegment = Math.random().toString(36).substring(2,6).toUpperCase();
-    const setupCode = `LN-${randSegment}`;
+    const code="LN-"+Math.random().toString(36).substring(2,6).toUpperCase();
     const colour=COLOURS[Math.floor(Math.random()*COLOURS.length)];
-    
-    const childRef = await addDoc(collection(db,"settings",state.settingId,"children"),{
-      name,dob:$("#dob").value.trim(),colour,parentEmails:[],parentUids:[],setupCode,createdAt:serverTimestamp()
-    });
-    
-    await setDoc(doc(db, "invites", setupCode), {
-      settingId: state.settingId,
-      childId: childRef.id,
-      childName: name,
-      status: "pending",
-      createdAt: serverTimestamp()
-    });
-    
-    sheet.remove();
-  };
-}
-
-/* ============================================================
-   PARENT HOME
-   ============================================================ */
-async function renderParentHome(){
-  clearSubs();
-  state.activeChildId = null; state.currentTab = null;
-  app.innerHTML=`<div class="spin"></div>`;
-  const ids=state.profile.childIds||[];
-  const kids=[];
-  for(
+    const childRef=await addDoc(collection(db,"settings",sta
