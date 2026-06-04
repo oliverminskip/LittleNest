@@ -85,6 +85,18 @@
   </div>
 </div>
 
+<script>
+window.onerror=function(msg,src,line,col,err){
+  document.getElementById("app").innerHTML=
+    '<div style="padding:32px 20px;font-family:monospace;font-size:13px;color:#C0455B;background:#fff8f8;border-radius:12px;margin:20px">'
+    +'<b>JS Error (line '+line+'):</b><br>'+msg+'<br><br><span style="color:#555">'+src+'</span></div>';
+};
+window.onunhandledrejection=function(e){
+  document.getElementById("app").innerHTML=
+    '<div style="padding:32px 20px;font-family:monospace;font-size:13px;color:#C0455B;background:#fff8f8;border-radius:12px;margin:20px">'
+    +'<b>Promise error:</b><br>'+(e.reason?.message||e.reason||"unknown")+'</div>';
+};
+</script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword,
@@ -348,4 +360,220 @@ function openAddChild(){
     $("#save").disabled=true;
     const code="LN-"+Math.random().toString(36).substring(2,6).toUpperCase();
     const colour=COLOURS[Math.floor(Math.random()*COLOURS.length)];
-    const childRef=await addDoc(collection(db,"settings",sta
+    const childRef=await addDoc(collection(db,"settings",state.settingId,"children"),{
+      name,dob:$("#dob").value.trim(),colour,parentEmails:[],parentUids:[],setupCode:code,createdAt:serverTimestamp()
+    });
+    await setDoc(doc(db,"invites",code),{settingId:state.settingId,childId:childRef.id,childName:name,status:"pending",createdAt:serverTimestamp()});
+    sheet.remove();
+  };
+}
+
+/* ---- parent home ---- */
+async function renderParentHome(){
+  clearSubs();
+  state.activeChildId=null;state.currentTab=null;
+  app.innerHTML=`<div class="spin"></div>`;
+  const ids=state.profile.childIds||[];
+  const kids=[];
+  for(const id of ids){
+    const s=await getDoc(doc(db,"settings",state.settingId,"children",id));
+    if(s.exists())kids.push({id,...s.data()});
+  }
+  if(kids.length===1){openChild(kids[0].id,kids[0],false);return;}
+  app.innerHTML=`
+    <div class="topbar"><button class="back" id="out">Sign out</button>
+      <h1 style="font-size:30px;color:var(--violet);margin-top:6px">Your children</h1></div>
+    <div class="screen" style="padding-top:6px" id="list"></div>`;
+  $("#out").onclick=()=>signOut(auth);
+  $("#list").innerHTML=kids.map(c=>`
+    <button class="card row" style="width:100%;padding:13px;border:1px solid var(--line);background:#fff;text-align:left" data-id="${c.id}">
+      <div class="avatar" style="background:${c.colour||'#6C4AE2'}">${esc((c.name||"?")[0])}</div>
+      <div style="flex:1"><div style="font-weight:800;font-size:17px">${esc(c.name)}</div></div>
+      <span class="muted" style="font-size:22px">›</span></button>`).join("");
+  $("#list").querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>{
+    const c=kids.find(x=>x.id===b.dataset.id);openChild(c.id,c,false);
+  });
+}
+
+/* ---- child detail ---- */
+function openChild(childId,child,admin,forcedTab=null){
+  clearSubs();
+  let tab=forcedTab||"diary";
+  state.activeChildId=childId;state.currentTab=tab;
+  const base=["settings",state.settingId,"children",childId];
+
+  // FIX: all three tab class attributes correctly use template literals inside the string
+  app.innerHTML=`
+    <div class="topbar">
+      <button class="back" id="back">‹ ${admin?"All children":"My children"}</button>
+      <h1 style="font-size:30px;color:${child.colour||'var(--violet)'};margin-top:6px">${esc(child.name)}</h1>
+      <p class="muted" style="margin:2px 0 0;font-weight:600">${admin?"Childminder view":"Today"}</p>
+    </div>
+    <div class="tabs">
+      <button class="tab ${tab==="diary"?"on":""}" data-t="diary">Diary</button>
+      <button class="tab ${tab==="journey"?"on":""}" data-t="journey">Journey</button>
+      <button class="tab ${tab==="chat"?"on":""}" data-t="chat">Messages</button>
+    </div>
+    <div id="body" class="screen" style="padding-top:0"></div>
+    <div id="fabwrap"></div>`;
+
+  $("#back").onclick=()=>admin?renderMinderHome():renderParentHome();
+  app.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+    tab=t.dataset.t;state.currentTab=tab;
+    app.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===t));
+    mount();
+  });
+  mount();
+
+  function mount(){
+    clearSubs();
+    const body=$("#body"),fw=$("#fabwrap");fw.innerHTML="";
+    if(tab==="diary")   mountDiary(body,fw);
+    if(tab==="journey") mountJourney(body,fw);
+    if(tab==="chat")    mountChat(body);
+  }
+
+  function mountDiary(body,fw){
+    body.innerHTML=`<div id="d"><div class="spin"></div></div>`;
+    const q=query(collection(db,...base,"entries"),orderBy("createdAt","desc"));
+    subs.push(onSnapshot(q,s=>{
+      const delBtn=admin?`<button class="btn btn-danger" id="delchild">🗑️ Delete ${esc(child.name)}'s profile</button>`:"";
+      $("#d").innerHTML=(s.empty?`<p class="muted center" style="padding:46px 0">No updates yet today.</p>`:s.docs.map(d=>entryCard(d.data())).join(""))+delBtn;
+      if(admin){
+        const db2=$("#delchild");if(!db2)return;
+        db2.onclick=async()=>{
+          if(!confirm(`Permanently delete ${child.name}'s profile? This cannot be undone.`))return;
+          db2.disabled=true;db2.textContent="Deleting…";
+          try{
+            await deleteDoc(doc(db,"settings",state.settingId,"children",childId));
+            if(child.setupCode)await deleteDoc(doc(db,"invites",child.setupCode));
+            renderMinderHome();
+          }catch(e){alert(e.message);db2.disabled=false;}
+        };
+      }
+    }));
+    if(admin){fw.innerHTML=`<button class="fab" id="addE">＋ Add update</button>`;$("#addE").onclick=()=>openDiaryComposer(base,child.name);}
+  }
+
+  function mountJourney(body,fw){
+    body.innerHTML=`${admin?"":`<p class="muted" style="font-size:13px;margin:4px 0 14px;line-height:1.4">${esc(child.name)}'s learning journey — captured against the EYFS areas of learning.</p>`}<div id="j"><div class="spin"></div></div>`;
+    const q=query(collection(db,...base,"observations"),orderBy("createdAt","desc"));
+    subs.push(onSnapshot(q,s=>{
+      if(s.empty){$("#j").innerHTML=`<p class="muted center" style="padding:46px 0">No observations yet.</p>`;return;}
+      $("#j").innerHTML=s.docs.map(d=>obsCard(d.data())).join("");
+    }));
+    if(admin){fw.innerHTML=`<button class="fab" id="addO">＋ New observation</button>`;$("#addO").onclick=()=>openObsComposer(base);}
+  }
+
+  function mountChat(body){
+    body.innerHTML=`<div id="c" style="padding-bottom:70px"><div class="spin"></div></div>
+      <div class="chatbar"><input id="msg" placeholder="Message…"><button class="btn btn-primary" id="send" style="width:auto;margin:0;padding:11px 20px">Send</button></div>`;
+    const q=query(collection(db,...base,"messages"),orderBy("createdAt"));
+    const me=admin?"fran":"parent";
+    subs.push(onSnapshot(q,s=>{
+      $("#c").innerHTML=s.empty?`<p class="muted center" style="padding:46px 0">No messages yet.</p>`:
+        s.docs.map(d=>{const m=d.data(),mine=m.from===me;
+          return `<div style="display:flex;justify-content:${mine?"flex-end":"flex-start"};margin-bottom:8px">
+            <div class="bubble" style="background:${mine?"var(--violet)":"#fff"};color:${mine?"#fff":"var(--ink)"};${mine?"":"border:1px solid var(--line)"}">${esc(m.text)}<div class="t">${fmtTime(m.createdAt)}</div></div></div>`;
+        }).join("");
+      $("#c").scrollTop=$("#c").scrollHeight;
+    }));
+    const send=async()=>{const v=$("#msg").value.trim();if(!v)return;$("#msg").value="";
+      await addDoc(collection(db,...base,"messages"),{from:me,text:v,createdAt:serverTimestamp()});};
+    $("#send").onclick=send;
+    $("#msg").onkeydown=e=>{if(e.key==="Enter")send();};
+  }
+}
+
+/* ---- cards ---- */
+function entryCard(e){
+  const t=TYPES[e.type]||TYPES.note;
+  return `<div class="card fade"><div style="padding:14px;display:flex;gap:12px">
+    <div class="iconbox" style="background:${t.tint}">${t.icon}</div>
+    <div style="flex:1">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <span style="font-weight:800;font-size:14px">${t.label}</span>
+        <span class="muted" style="font-size:12px;font-weight:700">${fmtTime(e.createdAt)}</span>
+      </div>
+      ${e.detail?`<div style="font-size:14.5px;line-height:1.45;margin-top:2px">${esc(e.detail)}</div>`:""}
+    </div></div></div>`;
+}
+function obsCard(o){
+  return `<div class="card fade"><div style="padding:16px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+      <span style="font-family:'Fraunces',serif;font-weight:600;font-size:18px">${esc(o.title)}</span>
+      <span class="muted" style="font-size:12px;font-weight:700">${fmtDate(o.createdAt)}</span>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">${(o.areas||[]).map(areaTag).join("")}</div>
+    <div style="font-size:14.5px;line-height:1.5">${esc(o.note)}</div>
+    ${o.nextSteps?`<div class="next"><div class="lbl">Next steps</div><div style="font-size:13.5px;line-height:1.45">${esc(o.nextSteps)}</div></div>`:""}
+  </div></div>`;
+}
+function areaTag(a){const x=AREAS[a];if(!x)return"";
+  return `<span class="areatag" style="background:${x.colour}22"><span class="dot" style="background:${x.colour}"></span>${x.short}</span>`;}
+
+/* ---- composers ---- */
+function openDiaryComposer(base,childName){
+  let type="meal";
+  const sheet=mountSheet("New update",`
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px" id="types">
+      ${Object.entries(TYPES).map(([k,v])=>`<button class="chip${k==="meal"?" on":""}" data-k="${k}">${v.icon} ${v.label}</button>`).join("")}
+    </div>
+    <textarea id="detail" rows="3" placeholder="What happened? e.g. Had a big lunch and went down well for a nap…"></textarea>
+    <div style="margin:14px 0;padding:12px;background:#E8F7EE;border-radius:12px;display:flex;align-items:center;gap:10px">
+      <input type="checkbox" id="wa" style="width:auto;cursor:pointer">
+      <label for="wa" style="font-size:13.5px;font-weight:700;color:#1E5335;cursor:pointer">📢 Also send via WhatsApp</label>
+    </div>
+    <button class="btn btn-primary" id="save">Post to parent</button>`);
+  sheet.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{
+    type=c.dataset.k;sheet.querySelectorAll(".chip").forEach(x=>x.classList.toggle("on",x===c));});
+  $("#save").onclick=async()=>{
+    const detail=$("#detail").value.trim();if(!detail)return;
+    $("#save").disabled=true;$("#save").textContent="Posting…";
+    await addDoc(collection(db,...base,"entries"),{type,detail,createdAt:serverTimestamp()});
+    if($("#wa").checked){
+      const msg=`Hi! New ${TYPES[type]?.label||"update"} for ${childName} on LittleNest ${TYPES[type]?.icon||"📝"}\n\n"${detail}"`;
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`,"_blank");
+    }
+    sheet.remove();
+  };
+}
+
+function openObsComposer(base){
+  let areas=[];
+  const sheet=mountSheet("New observation",`
+    <input id="title" placeholder="Title — e.g. Building a tall tower">
+    <div style="height:12px"></div>
+    <textarea id="note" rows="4" placeholder="What did you see? Describe the moment…"></textarea>
+    <div class="muted" style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin:16px 0 8px">EYFS areas of learning</div>
+    <div id="areas" style="display:flex;flex-wrap:wrap;gap:7px">
+      ${Object.entries(AREAS).map(([k,v])=>`<button class="chip" data-k="${k}">
+        <span class="dot" style="display:inline-block;background:${v.colour};margin-right:6px;vertical-align:middle"></span>${v.short}${v.prime?'<span class="muted" style="font-weight:600"> ·prime</span>':""}</button>`).join("")}
+    </div>
+    <textarea id="next" rows="2" placeholder="Next steps (optional)" style="margin-top:16px"></textarea>
+    <div style="height:16px"></div>
+    <button class="btn btn-gold" id="save">Save to journey</button>`);
+  sheet.querySelectorAll("#areas .chip").forEach(c=>c.onclick=()=>{
+    const k=c.dataset.k;
+    if(areas.includes(k)){areas=areas.filter(x=>x!==k);c.classList.remove("on");}
+    else{areas.push(k);c.classList.add("on");}
+  });
+  $("#save").onclick=async()=>{
+    const title=$("#title").value.trim(),note=$("#note").value.trim();
+    if(!title||!note||!areas.length){alert("Add a title, a note and at least one EYFS area.");return;}
+    $("#save").disabled=true;$("#save").textContent="Saving…";
+    await addDoc(collection(db,...base,"observations"),{title,note,areas,nextSteps:$("#next").value.trim(),createdAt:serverTimestamp()});
+    sheet.remove();
+  };
+}
+
+function mountSheet(title,inner){
+  const bd=document.createElement("div");bd.className="backdrop";
+  bd.innerHTML=`<div class="sheet fade"><div class="grab"></div><h3 style="font-size:23px;margin-bottom:14px">${title}</h3>${inner}</div>`;
+  bd.onclick=e=>{if(e.target===bd)bd.remove();};
+  document.body.appendChild(bd);
+  return bd;
+}
+</script>
+</body>
+</html>
