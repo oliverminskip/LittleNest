@@ -11,79 +11,195 @@
 <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/512/nest.png"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#F6F3FC;--card:#fff;--ink:#241B33;--sub:#7E7591;--violet:#6C4AE2;--vd:#5436C4;--lilac:#EEE8FB;--line:#ECE6F5;--gold:#C99A3C;--danger:#C0455B;--green:#1A7F4B;}
+:root{
+  --bg:#F5F1FB; --bg2:#FBF9FE; --card:#fff; --ink:#241B33; --ink2:#3A3147;
+  --sub:#7E7591; --faint:#A79FB8;
+  --violet:#6C4AE2; --vd:#5436C4; --vl:#8A6FF0;
+  --lilac:#EEE8FB; --lilac2:#F3EEFC; --line:#EBE4F4; --line2:#F1ECF8;
+  --gold:#C99A3C; --goldbg:#FBF3DF;
+  --danger:#C0455B; --green:#1A8551; --greenbg:#E7F6EE; --blue:#4E80C2;
+  --sh-sm:0 1px 3px rgba(36,27,51,.06),0 1px 2px rgba(36,27,51,.04);
+  --sh-md:0 4px 16px rgba(36,27,51,.08),0 1px 4px rgba(36,27,51,.04);
+  --sh-lg:0 12px 34px rgba(84,54,196,.18);
+  --sh-fab:0 8px 24px rgba(108,74,226,.34);
+}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html,body{margin:0;padding:0;}
-body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);background:var(--bg);background-image:radial-gradient(900px 380px at 50% -8%,rgba(108,74,226,.15),transparent);}
-#app{max-width:480px;margin:0 auto;min-height:100vh;}
-h1,h2,h3{font-family:'Fraunces',serif;font-weight:600;letter-spacing:-.4px;margin:0;}
+html,body{margin:0;padding:0;overscroll-behavior-y:none;}
+body{
+  font-family:'Nunito',system-ui,sans-serif;color:var(--ink);
+  background:var(--bg);
+  background-image:
+    radial-gradient(820px 360px at 50% -10%,rgba(108,74,226,.14),transparent),
+    radial-gradient(600px 300px at 90% 10%,rgba(201,154,60,.06),transparent);
+  background-attachment:fixed;
+}
+#app{max-width:480px;margin:0 auto;min-height:100vh;position:relative;}
+h1,h2,h3{font-family:'Fraunces',serif;font-weight:600;letter-spacing:-.5px;margin:0;line-height:1.1;}
 button{font-family:inherit;cursor:pointer;}
-input,textarea,select{font-family:inherit;width:100%;border:1px solid var(--line);border-radius:14px;padding:13px;font-size:15px;background:#fff;outline:none;color:var(--ink);}
-textarea{resize:none;line-height:1.45;}
-input:focus,textarea:focus,select:focus{border-color:var(--violet);box-shadow:0 0 0 3px rgba(108,74,226,.12);}
-.screen{padding:22px 20px 130px;}
-.muted{color:var(--sub);}
-.center{text-align:center;}
-.card{background:var(--card);border:1px solid var(--line);border-radius:18px;margin-bottom:12px;box-shadow:0 1px 2px rgba(36,27,51,.04);overflow:hidden;}
-.btn{display:block;width:100%;margin:0 0 12px;padding:15px 18px;border-radius:16px;border:none;font-size:16px;font-weight:800;}
-.btn-primary{background:var(--violet);color:#fff;box-shadow:0 8px 22px rgba(108,74,226,.28);}
-.btn-gold{background:var(--gold);color:#fff;}
-.btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
-.btn-green{background:var(--green);color:#fff;}
-.btn-danger{background:none;color:var(--danger);border:1px solid rgba(192,69,91,0.2);margin-top:24px;}
-.btn[disabled]{opacity:.5;pointer-events:none;}
+input,textarea,select{
+  font-family:inherit;width:100%;border:1.5px solid var(--line);border-radius:14px;
+  padding:13px 14px;font-size:15px;background:#fff;outline:none;color:var(--ink);
+  transition:border-color .15s,box-shadow .15s;
+}
+textarea{resize:none;line-height:1.5;}
+input::placeholder,textarea::placeholder{color:var(--faint);}
+input:focus,textarea:focus,select:focus{border-color:var(--violet);box-shadow:0 0 0 4px rgba(108,74,226,.12);}
+
+/* layout */
+.screen{padding:18px 18px 120px;}
+.muted{color:var(--sub);} .faint{color:var(--faint);} .center{text-align:center;}
 .row{display:flex;align-items:center;gap:13px;}
-.avatar{width:46px;height:46px;border-radius:14px;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;flex-shrink:0;}
-.topbar{position:sticky;top:0;background:var(--bg);z-index:5;padding:20px 20px 12px;}
-.back{background:none;border:none;color:var(--sub);font-weight:700;font-size:13px;padding:0;}
-.tabs{display:flex;gap:6px;padding:0 20px 12px;overflow-x:auto;}
-.tab{flex:1;min-width:0;padding:9px 4px;border-radius:12px;border:none;font-weight:800;font-size:13px;white-space:nowrap;background:#fff;color:var(--sub);box-shadow:inset 0 0 0 1px var(--line);}
-.tab.on{background:var(--ink);color:#fff;box-shadow:none;}
-.chip{padding:8px 13px;border-radius:20px;border:1px solid var(--line);background:#fff;color:var(--ink);font-weight:700;font-size:13px;}
-.chip.on{border:1.5px solid var(--violet);background:var(--lilac);color:var(--vd);}
-.fab{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;border:none;border-radius:30px;padding:14px 26px;font-size:15px;font-weight:800;box-shadow:0 8px 24px rgba(36,27,51,.3);z-index:20;white-space:nowrap;}
-.backdrop{position:fixed;inset:0;background:rgba(36,27,51,.45);display:flex;align-items:flex-end;justify-content:center;z-index:40;}
-.sheet{width:100%;max-width:480px;background:var(--bg);border-radius:24px 24px 0 0;padding:16px 20px 32px;max-height:92vh;overflow-y:auto;}
-.grab{width:40px;height:4px;background:var(--line);border-radius:4px;margin:0 auto 16px;}
-.iconbox{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
-.areatag{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:8px;font-size:11.5px;font-weight:800;color:#3a3346;}
+
+/* topbar */
+.topbar{position:sticky;top:0;z-index:8;padding:18px 18px 14px;
+  background:linear-gradient(180deg,var(--bg) 62%,rgba(245,241,251,.0));
+  backdrop-filter:blur(2px);}
+.back{background:none;border:none;color:var(--sub);font-weight:800;font-size:13.5px;padding:6px 0;display:inline-flex;align-items:center;gap:3px;}
+.back:active{color:var(--violet);}
+.eyebrow{font-size:12.5px;font-weight:800;color:var(--sub);text-transform:uppercase;letter-spacing:1.2px;}
+
+/* cards */
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;margin-bottom:12px;box-shadow:var(--sh-sm);overflow:hidden;}
+.tap{transition:transform .12s ease,box-shadow .12s ease;}
+.tap:active{transform:scale(.985);box-shadow:var(--sh-sm);}
+
+/* buttons */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin:0 0 12px;padding:15px 18px;border-radius:16px;border:none;font-size:16px;font-weight:800;transition:transform .12s,box-shadow .2s,opacity .2s;}
+.btn:active{transform:scale(.975);}
+.btn-primary{background:linear-gradient(135deg,#7857E8,#5B3CC9);color:#fff;box-shadow:var(--sh-lg);}
+.btn-gold{background:linear-gradient(135deg,#D6A746,#BE8A2E);color:#fff;box-shadow:0 8px 22px rgba(201,154,60,.3);}
+.btn-ghost{background:#fff;color:var(--ink);border:1.5px solid var(--line);box-shadow:var(--sh-sm);}
+.btn-green{background:linear-gradient(135deg,#23925C,#147544);color:#fff;box-shadow:0 8px 22px rgba(26,133,81,.28);}
+.btn-soft{background:var(--lilac);color:var(--vd);}
+.btn-danger{background:none;color:var(--danger);border:1.5px solid rgba(192,69,91,.22);}
+.btn[disabled]{opacity:.55;pointer-events:none;}
+.btn-sm{padding:10px 16px;font-size:14px;border-radius:13px;width:auto;margin:0;}
+
+/* avatar */
+.avatar{width:48px;height:48px;border-radius:15px;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px;flex-shrink:0;font-family:'Fraunces',serif;box-shadow:inset 0 -3px 8px rgba(0,0,0,.12);}
+.avatar.lg{width:60px;height:60px;border-radius:19px;font-size:26px;}
+
+/* chips */
+.chip{padding:9px 14px;border-radius:22px;border:1.5px solid var(--line);background:#fff;color:var(--ink2);font-weight:800;font-size:13.5px;transition:transform .1s,background .15s,border-color .15s;display:inline-flex;align-items:center;gap:6px;}
+.chip:active{transform:scale(.95);}
+.chip.on{border-color:var(--violet);background:var(--lilac);color:var(--vd);}
+
+/* bottom nav */
+.bottomnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;
+  background:rgba(255,255,255,.86);backdrop-filter:blur(18px) saturate(1.4);
+  border-top:1px solid var(--line);display:flex;
+  padding:7px 6px calc(7px + env(safe-area-inset-bottom));z-index:30;box-shadow:0 -4px 20px rgba(36,27,51,.05);}
+.navbtn{flex:1;border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0 4px;color:var(--faint);font-size:10.5px;font-weight:800;letter-spacing:.2px;transition:color .15s;position:relative;}
+.navbtn .ic{font-size:21px;transition:transform .18s cubic-bezier(.34,1.56,.64,1);line-height:1;}
+.navbtn.on{color:var(--violet);}
+.navbtn.on .ic{transform:translateY(-2px) scale(1.08);}
+.navbtn .nbadge{position:absolute;top:2px;right:50%;margin-right:-22px;}
+
+/* fab */
+.fab{position:fixed;bottom:calc(78px + env(safe-area-inset-bottom));right:50%;margin-right:-216px;
+  background:linear-gradient(135deg,#7857E8,#5B3CC9);color:#fff;border:none;border-radius:18px;
+  width:58px;height:58px;font-size:27px;font-weight:400;box-shadow:var(--sh-fab);z-index:25;
+  display:flex;align-items:center;justify-content:center;transition:transform .14s;}
+.fab:active{transform:scale(.9);}
+@media(max-width:480px){.fab{right:18px;margin-right:0;}}
+
+/* sheet */
+.backdrop{position:fixed;inset:0;background:rgba(36,27,51,.5);backdrop-filter:blur(2px);display:flex;align-items:flex-end;justify-content:center;z-index:40;animation:fadein .2s ease;}
+@keyframes fadein{from{opacity:0;}to{opacity:1;}}
+.sheet{width:100%;max-width:480px;background:var(--bg2);border-radius:26px 26px 0 0;padding:14px 20px calc(30px + env(safe-area-inset-bottom));max-height:92vh;overflow-y:auto;animation:slideup .32s cubic-bezier(.22,1,.36,1);box-shadow:0 -10px 40px rgba(36,27,51,.2);}
+@keyframes slideup{from{transform:translateY(100%);}to{transform:none;}}
+.grab{width:42px;height:5px;background:var(--line);border-radius:5px;margin:0 auto 14px;}
+
+/* misc components */
+.iconbox{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.areatag{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:9px;font-size:11.5px;font-weight:800;color:#3a3346;}
 .dot{width:7px;height:7px;border-radius:4px;display:inline-block;}
-.badge{background:var(--danger);color:#fff;border-radius:20px;min-width:20px;height:20px;font-size:11px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;}
-.bubble{max-width:78%;padding:9px 13px;border-radius:16px;font-size:14.5px;line-height:1.4;}
-.bubble .t{font-size:10.5px;opacity:.7;margin-top:3px;text-align:right;}
-.chatbar{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;padding:12px 14px;background:var(--bg);border-top:1px solid var(--line);display:flex;gap:8px;z-index:10;}
-.err{color:var(--danger);font-size:13.5px;font-weight:700;margin:4px 0 12px;}
-.next{margin-top:12px;padding:12px;border-radius:12px;background:#FBF4E3;border-left:3px solid var(--gold);}
-.next .lbl{font-size:11px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;}
-.splash{padding:74px 28px;text-align:center;}
-.mark{width:66px;height:66px;border-radius:21px;background:linear-gradient(145deg,#7C5CE6,#5436C4);margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:32px;box-shadow:0 12px 34px rgba(84,54,196,.4);}
-.fade{animation:rise .35s ease both;}
-@keyframes rise{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
-.spin{width:30px;height:30px;border:3px solid var(--line);border-top-color:var(--violet);border-radius:50%;animation:sp .8s linear infinite;margin:80px auto;}
-@keyframes sp{to{transform:rotate(360deg);}}
-.field-row{margin-bottom:14px;}
-.field-label{font-size:12px;font-weight:800;color:var(--sub);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
-.info-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px;}
-.info-card .title{font-weight:800;font-size:14px;margin-bottom:8px;}
-.info-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);}
+.badge{background:var(--danger);color:#fff;border-radius:20px;min-width:20px;height:20px;font-size:11px;font-weight:900;display:inline-flex;align-items:center;justify-content:center;padding:0 6px;box-shadow:0 2px 6px rgba(192,69,91,.4);}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;font-size:12px;font-weight:800;}
+.pill-in{background:var(--greenbg);color:var(--green);}
+.pill-out{background:#F0ECF6;color:var(--sub);}
+.pill-gold{background:var(--goldbg);color:var(--gold);}
+
+/* chat */
+.bubble{max-width:80%;padding:10px 14px;border-radius:18px;font-size:14.5px;line-height:1.42;box-shadow:var(--sh-sm);}
+.bubble .t{font-size:10.5px;opacity:.7;margin-top:3px;}
+.chatbar{position:fixed;bottom:calc(56px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:100%;max-width:480px;padding:12px 14px;background:rgba(255,255,255,.96);backdrop-filter:blur(14px);border-top:1px solid var(--line);display:flex;gap:8px;z-index:29;}
+
+/* forms */
+.field-row{margin-bottom:15px;}
+.field-label{font-size:12px;font-weight:800;color:var(--sub);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;}
+
+/* info cards */
+.info-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px 16px;margin-bottom:11px;box-shadow:var(--sh-sm);}
+.info-card .title{font-weight:900;font-size:14px;margin-bottom:10px;display:flex;align-items:center;gap:7px;}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line2);gap:12px;}
 .info-row:last-child{border-bottom:none;}
-.info-row .label{font-size:13px;color:var(--sub);}
-.info-row .value{font-size:13.5px;font-weight:700;text-align:right;}
-.notif-bar{background:linear-gradient(135deg,var(--violet),var(--vd));color:#fff;border-radius:14px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;}
-.toast-banner{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-200px);width:calc(100% - 32px);max-width:440px;background:var(--ink);color:#fff;padding:14px 16px;border-radius:16px;box-shadow:0 12px 32px rgba(36,27,51,.24);z-index:999;display:flex;align-items:center;gap:12px;transition:transform 0.4s cubic-bezier(0.175,0.885,0.32,1.275);cursor:pointer;}
+.info-row .label{font-size:13px;color:var(--sub);flex-shrink:0;}
+.info-row .value{font-size:13.5px;font-weight:800;text-align:right;}
+
+/* stat tiles */
+.stats{display:flex;gap:10px;margin-bottom:18px;}
+.stat{flex:1;background:#fff;border:1px solid var(--line);border-radius:17px;padding:13px 12px;box-shadow:var(--sh-sm);}
+.stat .n{font-family:'Fraunces',serif;font-size:27px;font-weight:600;line-height:1;}
+.stat .l{font-size:11px;font-weight:800;color:var(--sub);margin-top:5px;text-transform:uppercase;letter-spacing:.5px;}
+
+/* date strip */
+.datestrip{display:flex;gap:7px;overflow-x:auto;padding:2px 0 14px;margin:0 -2px;scrollbar-width:none;}
+.datestrip::-webkit-scrollbar{display:none;}
+.daypill{flex-shrink:0;min-width:50px;padding:9px 6px;border-radius:14px;background:#fff;border:1.5px solid var(--line);text-align:center;transition:all .15s;}
+.daypill.on{background:var(--ink);border-color:var(--ink);}
+.daypill .dow{font-size:10.5px;font-weight:800;color:var(--sub);text-transform:uppercase;}
+.daypill .dnum{font-size:17px;font-weight:900;margin-top:2px;}
+.daypill.on .dow,.daypill.on .dnum{color:#fff;}
+
+/* timeline */
+.tl-item{display:flex;gap:13px;}
+.tl-rail{display:flex;flex-direction:column;align-items:center;flex-shrink:0;}
+.tl-line{width:2px;flex:1;background:var(--line);margin:2px 0;}
+
+/* skeleton */
+.skel{background:linear-gradient(90deg,#ECE6F4 25%,#F5F1FB 50%,#ECE6F4 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:14px;}
+@keyframes shimmer{to{background-position:-200% 0;}}
+
+/* empty states */
+.empty{text-align:center;padding:50px 24px;}
+.empty .em{font-size:46px;margin-bottom:12px;filter:saturate(.85);}
+.empty .et{font-family:'Fraunces',serif;font-size:20px;font-weight:600;margin-bottom:6px;}
+.empty .es{font-size:14px;color:var(--sub);line-height:1.5;}
+
+/* next steps */
+.next{margin-top:12px;padding:12px 14px;border-radius:13px;background:var(--goldbg);border-left:3px solid var(--gold);}
+.next .lbl{font-size:11px;font-weight:900;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;}
+
+/* splash */
+.splash{padding:64px 26px 40px;text-align:center;}
+.mark{width:78px;height:78px;border-radius:24px;background:linear-gradient(145deg,#8466EC,#5436C4);margin:0 auto 18px;display:flex;align-items:center;justify-content:center;font-size:38px;box-shadow:0 16px 40px rgba(84,54,196,.42),inset 0 -4px 12px rgba(0,0,0,.18);}
+.err{color:var(--danger);font-size:13.5px;font-weight:800;margin:4px 0 12px;background:#FCF1F3;padding:11px 14px;border-radius:12px;}
+.green-box{background:var(--greenbg);border-radius:13px;padding:13px 14px;display:flex;align-items:center;gap:11px;margin:6px 0 14px;border:1px solid rgba(26,133,81,.14);}
+
+/* notif toast */
+.toast-banner{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-220px);width:calc(100% - 28px);max-width:452px;background:var(--ink);color:#fff;padding:14px 16px;border-radius:18px;box-shadow:0 14px 38px rgba(36,27,51,.32);z-index:999;display:flex;align-items:center;gap:12px;transition:transform .45s cubic-bezier(.17,.89,.32,1.28);cursor:pointer;}
 .toast-banner.show{transform:translateX(-50%) translateY(0);}
-.green-box{background:#E8F7EE;border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;margin:14px 0;}
+
+/* animations */
+.fade{animation:rise .4s cubic-bezier(.22,1,.36,1) both;}
+@keyframes rise{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+.spin{width:30px;height:30px;border:3px solid var(--line);border-top-color:var(--violet);border-radius:50%;animation:sp .8s linear infinite;margin:60px auto;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.seg{display:flex;background:var(--lilac2);border-radius:14px;padding:4px;gap:4px;margin-bottom:16px;}
+.seg button{flex:1;border:none;background:none;padding:9px;border-radius:11px;font-weight:800;font-size:13.5px;color:var(--sub);transition:all .18s;}
+.seg button.on{background:#fff;color:var(--vd);box-shadow:var(--sh-sm);}
 </style>
 </head>
 <body>
 <div id="app"><div class="spin"></div></div>
 <div id="toast" class="toast-banner">
   <div style="font-size:22px" id="toast-icon">💬</div>
-  <div style="flex:1">
-    <div style="font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.5px;opacity:.7" id="toast-title"></div>
-    <div style="font-size:14.5px;font-weight:600;margin-top:1px" id="toast-body"></div>
+  <div style="flex:1;min-width:0">
+    <div style="font-weight:900;font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;opacity:.7" id="toast-title"></div>
+    <div style="font-size:14.5px;font-weight:700;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="toast-body"></div>
   </div>
 </div>
 
@@ -106,27 +222,49 @@ const fb=initializeApp(firebaseConfig);
 const auth=getAuth(fb);
 const db=getFirestore(fb);
 
-/* ── service worker ── */
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 
 /* ── constants ── */
 const AREAS={cl:{short:"C&L",label:"Communication & Language",prime:true,colour:"#7FA8C9"},pd:{short:"PD",label:"Physical Development",prime:true,colour:"#C26B4E"},psed:{short:"PSED",label:"Personal, Social & Emotional",prime:true,colour:"#D9A441"},lit:{short:"Lit",label:"Literacy",prime:false,colour:"#8E6BA8"},ma:{short:"Maths",label:"Mathematics",prime:false,colour:"#5B9A8B"},utw:{short:"UtW",label:"Understanding the World",prime:false,colour:"#A8924E"},ead:{short:"EAD",label:"Expressive Arts & Design",prime:false,colour:"#C76B8A"}};
-const TYPES={meal:{label:"Meal",icon:"🍽️",tint:"#EEE8FB"},nap:{label:"Nap",icon:"😴",tint:"#E4ECF4"},nappy:{label:"Nappy",icon:"🧷",tint:"#EDE6F4"},activity:{label:"Activity",icon:"🧩",tint:"#E5F1E6"},mood:{label:"Mood",icon:"😊",tint:"#FBF1DC"},note:{label:"Note",icon:"📝",tint:"#F2ECE6"}};
-const COLOURS=["#6C4AE2","#5B7B6F","#C26B4E","#9A7BB0","#D9A441","#5B9A8B"];
+const TYPES={
+  meal:{label:"Meal",icon:"🍽️",tint:"#EEE8FB",ph:"What did they eat?",portion:true},
+  nap:{label:"Nap",icon:"😴",tint:"#E4ECF4",ph:"How did they sleep?",times:true},
+  nappy:{label:"Nappy",icon:"🧷",tint:"#EDE6F4",ph:"Wet / dirty / dry",opts:["Wet","Dirty","Dry"]},
+  bottle:{label:"Bottle",icon:"🍼",tint:"#E9F0F6",ph:"How many oz / ml?"},
+  activity:{label:"Activity",icon:"🧩",tint:"#E5F1E6",ph:"What did they get up to?"},
+  mood:{label:"Mood",icon:"😊",tint:"#FBF1DC",ph:"How were they feeling?",opts:["Happy","Settled","Tired","Upset","Poorly"]},
+  note:{label:"Note",icon:"📝",tint:"#F2ECE6",ph:"Anything to share…"}
+};
+const PORTIONS=["All","Most","Some","None"];
+const COLOURS=["#6C4AE2","#5B7B6F","#C26B4E","#9A7BB0","#D9A441","#5B9A8B","#8E6BA8","#C76B8A"];
 const ICON="https://img.icons8.com/fluency/512/nest.png";
 
 /* ── helpers ── */
 const $=(s,r=document)=>r.querySelector(s);
 const app=$("#app");
 const esc=s=>(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const fmtTime=ts=>{const d=ts?.toDate?ts.toDate():new Date();return d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});};
+const fmtTime=ts=>{const d=ts?.toDate?ts.toDate():(ts instanceof Date?ts:new Date());return d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});};
 const fmtDate=ts=>{const d=ts?.toDate?ts.toDate():new Date();const t=new Date();return d.toDateString()===t.toDateString()?"Today":d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});};
 const phoneForWA=p=>{if(!p)return null;const c=p.replace(/\D/g,"");if(c.startsWith("07"))return"44"+c.slice(1);if(c.startsWith("44"))return c;return c;};
+const greeting=()=>{const h=new Date().getHours();return h<12?"Good morning":h<17?"Good afternoon":"Good evening";};
+const todayKey=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
+const keyOf=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const dateOfEntry=ts=>{const d=ts?.toDate?ts.toDate():new Date();return keyOf(d);};
+function ageFromDob(dob){
+  const m=(dob||"").match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(!m)return dob||"";
+  const bd=new Date(+m[3],+m[2]-1,+m[1]),now=new Date();
+  let mo=(now.getFullYear()-bd.getFullYear())*12+(now.getMonth()-bd.getMonth());
+  if(now.getDate()<bd.getDate())mo--;
+  if(mo<0)return dob;
+  const y=Math.floor(mo/12),r=mo%12;
+  return y>0?`${y}y ${r}m`:`${r}m`;
+}
 
 /* ── state ── */
 let state={profile:null,settingId:null,activeChildId:null,currentTab:null};
 let subs=[],alertSubs=[];
-let unread={};  // {childId: count} — in-memory unread badges
+let unread={};
 const clearSubs=()=>{subs.forEach(u=>u&&u());subs=[];};
 const clearAlerts=()=>{alertSubs.forEach(u=>u&&u());alertSubs=[];};
 
@@ -136,25 +274,19 @@ async function requestNotifPermission(){
   if(Notification.permission==='default') await Notification.requestPermission();
 }
 function pushNotif(title,body,childId,onClick){
-  // In-app toast always fires
   toast(title,body,onClick);
-  // Native notification if permission granted
-  if(Notification.permission==='granted'){
-    try{
-      const n=new Notification("LittleNest 🪺",{body:`${title}: ${body}`,icon:ICON,badge:ICON,tag:childId||"ln",renotify:true});
-      n.onclick=()=>{window.focus();n.close();if(onClick)onClick();};
-    }catch(e){}
+  if(window.Notification&&Notification.permission==='granted'){
+    try{const n=new Notification("LittleNest 🪺",{body:`${title}: ${body}`,icon:ICON,badge:ICON,tag:childId||"ln",renotify:true});
+      n.onclick=()=>{window.focus();n.close();if(onClick)onClick();};}catch(e){}
   }
 }
-
-/* ── toast ── */
 function toast(title,body,onClick){
   const t=$("#toast");
   $("#toast-title").textContent=title;
-  $("#toast-body").textContent=(body||"").length>55?(body||"").slice(0,52)+"...":(body||"");
+  $("#toast-body").textContent=body||"";
   t.classList.add("show");
   t.onclick=()=>{t.classList.remove("show");if(onClick)onClick();};
-  setTimeout(()=>t.classList.remove("show"),5500);
+  clearTimeout(t._timer);t._timer=setTimeout(()=>t.classList.remove("show"),5200);
 }
 
 /* ── cross-feed alerts ── */
@@ -162,7 +294,6 @@ function initAlerts(role,settingId,childIds=[]){
   clearAlerts();
   childIds.forEach(cid=>{
     const base=["settings",settingId,"children",cid];
-    // Messages
     const qm=query(collection(db,...base,"messages"),orderBy("createdAt","desc"));
     let im=true;
     alertSubs.push(onSnapshot(qm,s=>{
@@ -170,18 +301,12 @@ function initAlerts(role,settingId,childIds=[]){
       if(!s.empty){
         const m=s.docs[0].data();
         const fromOther=role==="minder"?m.from==="parent":m.from==="fran";
-        if(fromOther){
-          if(!(state.activeChildId===cid&&state.currentTab==="chat")){
-            if(role==="minder"){
-              unread[cid]=(unread[cid]||0)+1;
-              refreshDashboardBadge(cid);
-            }
-            pushNotif("💬 New message",m.text,cid,()=>navToChild(cid,settingId,role==="minder","chat"));
-          }
+        if(fromOther&&!(state.activeChildId===cid&&state.currentTab==="chat")){
+          if(role==="minder"){unread[cid]=(unread[cid]||0)+1;refreshBadges();}
+          pushNotif("💬 New message",m.text,cid,()=>navToChild(cid,settingId,role==="minder","chat"));
         }
       }
     }));
-    // Diary entries (parent view only)
     if(role==="parent"){
       const qd=query(collection(db,...base,"entries"),orderBy("createdAt","desc"));
       let id=true;
@@ -189,7 +314,7 @@ function initAlerts(role,settingId,childIds=[]){
         if(id){id=false;return;}
         if(!s.empty&&!(state.activeChildId===cid&&state.currentTab==="diary")){
           const e=s.docs[0].data();
-          pushNotif(`${TYPES[e.type]?.icon||"📝"} New diary update`,e.detail||"",cid,()=>navToChild(cid,settingId,false,"diary"));
+          pushNotif(`${TYPES[e.type]?.icon||"📝"} New diary update`,e.detail||TYPES[e.type]?.label||"",cid,()=>navToChild(cid,settingId,false,"diary"));
         }
       }));
     }
@@ -197,25 +322,24 @@ function initAlerts(role,settingId,childIds=[]){
 }
 async function navToChild(cid,settingId,admin,tab){
   const snap=await getDoc(doc(db,"settings",settingId,"children",cid));
-  if(snap.exists())openChild(cid,snap.data(),admin,tab);
+  if(snap.exists())openChild(cid,{id:cid,...snap.data()},admin,tab);
 }
-function refreshDashboardBadge(cid){
-  const el=document.querySelector(`[data-badge="${cid}"]`);
-  if(!el)return;
-  const count=unread[cid]||0;
-  el.innerHTML=count>0?`<span class="badge">${count}</span>`:"";
+function refreshBadges(){
+  document.querySelectorAll("[data-badge]").forEach(el=>{
+    const c=unread[el.dataset.badge]||0;
+    el.innerHTML=c>0?`<span class="badge">${c}</span>`:"";
+  });
+  const tot=Object.values(unread).reduce((a,b)=>a+b,0);
+  const nb=$("#navbadge");if(nb)nb.innerHTML=tot>0?`<span class="badge">${tot}</span>`:"";
 }
 
 /* ── auth gate ── */
 onAuthStateChanged(auth,async user=>{
   clearSubs();
   if(!user){clearAlerts();renderAuth();return;}
-  app.innerHTML='<div class="spin"></div><p style="text-align:center;margin-top:0;padding:0 20px"><button onclick="import(\'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js\').then(m=>m.signOut(getAuth()))" style="background:none;border:none;color:#7E7591;font-size:13px;font-family:inherit;cursor:pointer;text-decoration:underline">Having trouble? Tap to sign out</button></p>';
-  // Sign out helper accessible from inline onclick
-  window._signOut=()=>signOut(auth);
-  app.querySelector('button')&&(app.querySelector('button').onclick=()=>signOut(auth));
-  // Timeout — if Firebase doesn't respond in 8s, force sign out
-  const timeout=setTimeout(()=>signOut(auth),8000);
+  app.innerHTML='<div class="spin"></div><p class="center" style="margin-top:0;padding:0 20px"><button id="bail" style="background:none;border:none;color:var(--sub);font-size:13px;font-family:inherit;cursor:pointer;text-decoration:underline">Having trouble? Tap to sign out</button></p>';
+  const bail=$("#bail");if(bail)bail.onclick=()=>signOut(auth);
+  const timeout=setTimeout(()=>signOut(auth),9000);
   try{
     const snap=await getDoc(doc(db,"users",user.uid));
     clearTimeout(timeout);
@@ -230,7 +354,7 @@ onAuthStateChanged(auth,async user=>{
         initAlerts("parent",state.settingId,state.profile.childIds||[]);
         renderParentHome();
       }
-    }else{renderOnboarding(user);}
+    }else renderOnboarding(user);
   }catch(e){clearTimeout(timeout);app.innerHTML=`<div class="splash"><p class="err">${esc(e.message)}</p><button class="btn btn-ghost" id="so">Sign out</button></div>`;$("#so").onclick=()=>signOut(auth);}
 });
 
@@ -239,8 +363,8 @@ function renderAuth(mode="in"){
   app.innerHTML=`
     <div class="splash fade">
       <div class="mark">🪺</div>
-      <h1 style="font-size:42px">LittleNest</h1>
-      <p class="muted" style="margin:4px 0 36px">The warm little app for childminders &amp; families</p>
+      <h1 style="font-size:44px">LittleNest</h1>
+      <p class="muted" style="margin:6px 0 34px;font-weight:600">The warm little app for childminders &amp; families</p>
       <div id="err"></div>
       ${mode==="up"?`<div class="field-row"><input id="uname" placeholder="Your full name" autocomplete="name"></div>`:""}
       <div class="field-row"><input id="email" type="email" placeholder="Email address" autocomplete="email"></div>
@@ -258,7 +382,7 @@ function renderAuth(mode="in"){
         const c=await createUserWithEmailAndPassword(auth,email,pw);
         const nm=($("#uname")?.value||"").trim();
         if(nm)await updateProfile(c.user,{displayName:nm});
-      }else{await signInWithEmailAndPassword(auth,email,pw);}
+      }else await signInWithEmailAndPassword(auth,email,pw);
     }catch(e){$("#err").innerHTML=`<div class="err">${esc(prettyErr(e))}</div>`;btn.disabled=false;btn.textContent=mode==="up"?"Create account":"Sign in";}
   };
 }
@@ -272,18 +396,19 @@ function renderOnboarding(user){
   app.innerHTML=`
     <div class="splash fade">
       <div class="mark">🪺</div>
-      <h1 style="font-size:34px">Welcome</h1>
-      <p class="muted" style="margin:4px 0 32px">How will you be using LittleNest?</p>
+      <h1 style="font-size:36px">Welcome</h1>
+      <p class="muted" style="margin:6px 0 32px;font-weight:600">How will you be using LittleNest?</p>
       <button class="btn btn-primary" id="minder">I'm a childminder<span style="display:block;font-size:12px;font-weight:600;opacity:.9">Set up my setting</span></button>
       <button class="btn btn-ghost" id="parent">I'm a parent<span style="display:block;font-size:12px;font-weight:600;color:var(--sub)">Link to my child</span></button>
-      <button class="btn btn-ghost" id="out" style="margin-top:18px;color:var(--sub)">Sign out</button>
+      <button class="btn btn-ghost" id="out" style="margin-top:18px;color:var(--sub);border:none;box-shadow:none">Sign out</button>
     </div>`;
   $("#out").onclick=()=>signOut(auth);
   $("#minder").onclick=()=>{
     app.innerHTML=`
       <div class="splash fade">
-        <h2 style="font-size:28px">Name your setting</h2>
-        <p class="muted" style="margin:6px 0 22px">e.g. Francesca Minskip Childminding</p>
+        <div class="mark">🪺</div>
+        <h2 style="font-size:30px">Name your setting</h2>
+        <p class="muted" style="margin:8px 0 22px;font-weight:600">e.g. Francesca's Little Stars</p>
         <div class="field-row"><input id="sn" placeholder="Setting name"></div>
         <button class="btn btn-primary" id="create">Create setting</button>
       </div>`;
@@ -299,17 +424,17 @@ function renderOnboarding(user){
   $("#parent").onclick=()=>renderParentLink(user);
 }
 
-/* ── parent link via code ── */
+/* ── parent link ── */
 function renderParentLink(user,err=null){
   app.innerHTML=`
     <div class="splash fade">
       <div class="mark">🪺</div>
-      <h2 style="font-size:26px">Link to your child</h2>
-      <p class="muted" style="margin:10px 0 22px;line-height:1.5">Enter the setup code your childminder gave you.</p>
+      <h2 style="font-size:28px">Link to your child</h2>
+      <p class="muted" style="margin:10px 0 22px;line-height:1.5;font-weight:600">Enter the setup code your childminder gave you.</p>
       ${err?`<div class="err">${esc(err)}</div>`:""}
       <div class="field-row"><input id="code" placeholder="e.g. LN-X4A2" style="text-align:center;font-family:monospace;font-size:22px;letter-spacing:3px;text-transform:uppercase"></div>
       <button class="btn btn-primary" id="link">Link my child</button>
-      <button class="btn btn-ghost" id="out2" style="color:var(--sub)">Sign out</button>
+      <button class="btn btn-ghost" id="out2" style="color:var(--sub);border:none;box-shadow:none">Sign out</button>
     </div>`;
   $("#out2").onclick=()=>signOut(auth);
   $("#link").onclick=async()=>{
@@ -323,21 +448,20 @@ function renderParentLink(user,err=null){
       const email=(user.email||"").toLowerCase();
       await updateDoc(doc(db,"settings",settingId,"children",childId),{parentUids:arrayUnion(user.uid),parentEmails:arrayUnion(email)});
       await updateDoc(doc(db,"invites",code),{status:"used",usedBy:user.uid,usedAt:serverTimestamp()});
-      const childIds=[childId];
-      await setDoc(doc(db,"users",user.uid),{role:"parent",name:user.displayName||"",email,settingId,childIds});
-      state.profile={role:"parent",settingId,childIds};state.settingId=settingId;
-      initAlerts("parent",settingId,childIds);
+      await setDoc(doc(db,"users",user.uid),{role:"parent",name:user.displayName||"",email,settingId,childIds:[childId]});
+      state.profile={role:"parent",settingId,childIds:[childId]};state.settingId=settingId;
+      initAlerts("parent",settingId,[childId]);
       renderParentProfileSetup(settingId,childId,invSnap.data().childName||"your child");
     }catch(e){renderParentLink(user,e.message);}
   };
 }
 
-/* ── parent profile setup (shown once after linking) ── */
+/* ── parent profile setup ── */
 function renderParentProfileSetup(settingId,childId,childName){
   app.innerHTML=`
-    <div class="screen fade" style="padding-top:40px">
-      <h2 style="font-size:28px;margin-bottom:6px">One more step</h2>
-      <p class="muted" style="margin:0 0 24px;line-height:1.5">Help ${esc(childName)}'s childminder have your details to hand. You can update these any time.</p>
+    <div class="screen fade" style="padding-top:44px">
+      <h2 style="font-size:30px;margin-bottom:6px">One more step</h2>
+      <p class="muted" style="margin:0 0 24px;line-height:1.5;font-weight:600">Help ${esc(childName)}'s childminder have your details to hand. You can update these any time.</p>
       <div class="field-row"><div class="field-label">Your full name</div><input id="pname" placeholder="e.g. Sophie Harper" value="${esc(auth.currentUser?.displayName||"")}"></div>
       <div class="field-row"><div class="field-label">Your mobile number</div><input id="pphone" type="tel" placeholder="e.g. 07700 900123"></div>
       <div class="field-row"><div class="field-label">Emergency contact name</div><input id="ename" placeholder="e.g. James Harper"></div>
@@ -349,18 +473,11 @@ function renderParentProfileSetup(settingId,childId,childName){
     </div>`;
   const save=async(skip)=>{
     if(!skip){
-      const updates={};
-      const pname=$("#pname").value.trim();const pphone=$("#pphone").value.trim();
-      const ename=$("#ename").value.trim();const ephone=$("#ephone").value.trim();
-      const medical=$("#medical").value.trim();
-      if(pname)updates.parentName=pname;
-      if(pphone)updates.parentPhone=pphone;
-      if(ename)updates.emergencyName=ename;
-      if(ephone)updates.emergencyPhone=ephone;
-      if(medical)updates.medicalNotes=medical;
-      if(Object.keys(updates).length>0){
-        try{await updateDoc(doc(db,"settings",settingId,"children",childId),updates);}catch(e){}
-      }
+      const u={},g=id=>$("#"+id).value.trim();
+      if(g("pname"))u.parentName=g("pname");if(g("pphone"))u.parentPhone=g("pphone");
+      if(g("ename"))u.emergencyName=g("ename");if(g("ephone"))u.emergencyPhone=g("ephone");
+      if(g("medical"))u.medicalNotes=g("medical");
+      if(Object.keys(u).length){try{await updateDoc(doc(db,"settings",settingId,"children",childId),u);}catch(e){}}
     }
     renderParentHome();
   };
@@ -368,58 +485,143 @@ function renderParentProfileSetup(settingId,childId,childName){
   $("#skipprofile").onclick=()=>save(true);
 }
 
-/* ── minder home ── */
+/* ── MINDER DASHBOARD ── */
 function renderMinderHome(){
   clearSubs();
   state.activeChildId=null;state.currentTab=null;
+  const name=(state.profile?.name||"").split(" ")[0]||"";
+  const today=new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});
   app.innerHTML=`
     <div class="topbar">
-      <button class="back" id="out">Sign out</button>
-      <h1 style="font-size:30px;color:var(--violet);margin-top:6px">Today</h1>
-      <p class="muted" style="margin:2px 0 0;font-weight:600" id="sub">Loading…</p>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <p class="eyebrow" style="margin-bottom:4px">${esc(today)}</p>
+          <h1 style="font-size:30px">${greeting()}${name?`, ${esc(name)}`:""}</h1>
+        </div>
+        <button class="back" id="out" style="margin-top:4px">Sign out</button>
+      </div>
     </div>
-    <div class="screen" style="padding-top:6px" id="list"><div class="spin"></div></div>
-    <button class="fab" id="add">＋ Add child</button>`;
+    <div class="screen" style="padding-top:4px">
+      <div class="stats" id="stats">
+        <div class="stat"><div class="skel" style="height:27px;width:30px"></div><div class="l">In today</div></div>
+        <div class="stat"><div class="skel" style="height:27px;width:30px"></div><div class="l">Updates</div></div>
+        <div class="stat"><div class="skel" style="height:27px;width:30px"></div><div class="l">Unread</div></div>
+      </div>
+      <p class="eyebrow" style="margin:2px 0 12px">Your children</p>
+      <div id="list" class="stagger">
+        ${[0,1].map(()=>`<div class="card" style="padding:14px;display:flex;gap:13px;align-items:center"><div class="skel" style="width:48px;height:48px;border-radius:15px"></div><div style="flex:1"><div class="skel" style="height:16px;width:55%;margin-bottom:8px"></div><div class="skel" style="height:12px;width:38%"></div></div></div>`).join("")}
+      </div>
+    </div>
+    <button class="fab" id="add" aria-label="Add child">＋</button>`;
   $("#out").onclick=()=>signOut(auth);
   $("#add").onclick=openAddChild;
+
   const q=query(collection(db,"settings",state.settingId,"children"),orderBy("createdAt"));
-  subs.push(onSnapshot(q,snap=>{
-    $("#sub").textContent=`${snap.size} ${snap.size===1?"child":"children"} in today`;
+  subs.push(onSnapshot(q,async snap=>{
     initAlerts("minder",state.settingId,snap.docs.map(d=>d.id));
-    if(snap.empty){$("#list").innerHTML=`<p class="muted center" style="padding:46px 0">No children yet.<br>Tap "Add child" to begin.</p>`;return;}
-    $("#list").innerHTML=snap.docs.map(d=>{
-      const c=d.data();
-      const uc=unread[d.id]||0;
-      return `<button class="card row fade" style="width:100%;padding:13px;border:1px solid var(--line);background:#fff;text-align:left" data-id="${d.id}">
-        <div class="avatar" style="background:${c.colour||'#6C4AE2'}">${esc((c.name||"?")[0])}</div>
-        <div style="flex:1;min-width:0">
-          <div style="font-weight:800;font-size:17px">${esc(c.name)}</div>
-          <div class="muted" style="font-size:12.5px">${esc(c.dob||"")}${c.setupCode?` · Code: <span style="font-family:monospace;color:var(--gold)">${esc(c.setupCode)}</span>`:""}${c.parentName?` · <span style="color:var(--ink)">${esc(c.parentName)}</span>`:""}</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:6px">
-          <span data-badge="${d.id}">${uc>0?`<span class="badge">${uc}</span>`:""}</span>
-          <span class="muted" style="font-size:22px">›</span>
-        </div></button>`;
-    }).join("");
-    $("#list").querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>{
-      const d=snap.docs.find(x=>x.id===b.dataset.id);
-      openChild(b.dataset.id,d.data(),true);
-    });
+    if(snap.empty){
+      $("#stats").style.display="none";
+      $("#list").innerHTML=`<div class="empty"><div class="em">🐣</div><div class="et">No children yet</div><div class="es">Tap the + button to add your first child and generate their parent link code.</div></div>`;
+      return;
+    }
+    // fetch today's attendance + count today's entries for each child
+    const tk=todayKey();
+    const rows=await Promise.all(snap.docs.map(async d=>{
+      const c={id:d.id,...d.data()};
+      let att=null,updates=0;
+      try{const a=await getDoc(doc(db,"settings",state.settingId,"children",d.id,"attendance",tk));if(a.exists())att=a.data();}catch(e){}
+      try{const es=await getDocs(query(collection(db,"settings",state.settingId,"children",d.id,"entries"),orderBy("createdAt","desc")));updates=es.docs.filter(x=>dateOfEntry(x.data().createdAt)===tk).length;}catch(e){}
+      return {c,att,updates};
+    }));
+    const inCount=rows.filter(r=>r.att&&r.att.signInAt&&!r.att.signOutAt).length;
+    const totUpdates=rows.reduce((a,r)=>a+r.updates,0);
+    const totUnread=Object.values(unread).reduce((a,b)=>a+b,0);
+    $("#stats").style.display="flex";
+    $("#stats").innerHTML=`
+      <div class="stat"><div class="n" style="color:var(--green)">${inCount}</div><div class="l">In today</div></div>
+      <div class="stat"><div class="n" style="color:var(--violet)">${totUpdates}</div><div class="l">Updates</div></div>
+      <div class="stat"><div class="n" style="color:${totUnread>0?'var(--danger)':'var(--ink)'}">${totUnread}</div><div class="l">Unread</div></div>`;
+    $("#list").innerHTML=rows.map((r,i)=>childDashCard(r,i)).join("");
+    bindDashCards(rows);
   },err=>{$("#list").innerHTML=`<p class="err">${esc(err.message)}</p>`;}));
+}
+
+function childDashCard({c,att,updates},i){
+  const uc=unread[c.id]||0;
+  const age=ageFromDob(c.dob);
+  const linked=(c.parentUids||[]).length>0;
+  let attHtml;
+  if(att&&att.signInAt&&!att.signOutAt) attHtml=`<span class="pill pill-in">● In since ${fmtTime(att.signInAt)}</span>`;
+  else if(att&&att.signOutAt) attHtml=`<span class="pill pill-out">Out ${fmtTime(att.signOutAt)}</span>`;
+  else attHtml=`<span class="pill pill-out">Not in yet</span>`;
+  return `<div class="card fade" style="animation-delay:${i*.04}s;padding:14px">
+    <div class="row" data-open="${c.id}">
+      <div class="avatar" style="background:${c.colour||'#6C4AE2'}">${esc((c.name||"?")[0])}</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-weight:900;font-size:17px">${esc(c.name)}</span>
+          ${age?`<span class="muted" style="font-size:12.5px;font-weight:700">${esc(age)}</span>`:""}
+        </div>
+        <div style="margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          ${attHtml}
+          ${updates>0?`<span class="muted" style="font-size:12px;font-weight:800">${updates} update${updates>1?'s':''}</span>`:""}
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <span data-badge="${c.id}">${uc>0?`<span class="badge">${uc}</span>`:""}</span>
+        <span class="muted" style="font-size:22px;line-height:1">›</span>
+      </div>
+    </div>
+    ${linked?`<div style="display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line2)">
+      ${att&&att.signInAt&&!att.signOutAt
+        ? `<button class="btn btn-ghost btn-sm" style="flex:1" data-out="${c.id}">Sign out</button>`
+        : att&&att.signOutAt
+          ? `<button class="btn btn-ghost btn-sm" style="flex:1" data-undo="${c.id}">Undo sign-out</button>`
+          : `<button class="btn btn-green btn-sm" style="flex:1" data-in="${c.id}">Sign in</button>`}
+      <button class="btn btn-soft btn-sm" style="flex:1" data-update="${c.id}">＋ Update</button>
+    </div>`
+    :`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line2);display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <div><div class="muted" style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px">Parent code</div>
+        <div style="font-family:monospace;font-size:16px;font-weight:800;color:var(--gold);letter-spacing:1px">${esc(c.setupCode||"")}</div></div>
+        <button class="btn btn-soft btn-sm" data-share="${c.id}">Share code</button>
+      </div>`}
+  </div>`;
+}
+
+function bindDashCards(rows){
+  const map={};rows.forEach(r=>map[r.c.id]=r.c);
+  app.querySelectorAll("[data-open]").forEach(el=>el.onclick=()=>openChild(el.dataset.open,map[el.dataset.open],true));
+  app.querySelectorAll("[data-in]").forEach(b=>b.onclick=async e=>{e.stopPropagation();b.disabled=true;await setDoc(doc(db,"settings",state.settingId,"children",b.dataset.in,"attendance",todayKey()),{signInAt:serverTimestamp(),date:todayKey()},{merge:true});toast("✓ Signed in",map[b.dataset.in].name+" marked as in");renderMinderHome();});
+  app.querySelectorAll("[data-out]").forEach(b=>b.onclick=async e=>{e.stopPropagation();b.disabled=true;await setDoc(doc(db,"settings",state.settingId,"children",b.dataset.out,"attendance",todayKey()),{signOutAt:serverTimestamp()},{merge:true});toast("✓ Signed out",map[b.dataset.out].name+" marked as out");renderMinderHome();});
+  app.querySelectorAll("[data-undo]").forEach(b=>b.onclick=async e=>{e.stopPropagation();b.disabled=true;await updateDoc(doc(db,"settings",state.settingId,"children",b.dataset.undo,"attendance",todayKey()),{signOutAt:null});renderMinderHome();});
+  app.querySelectorAll("[data-update]").forEach(b=>b.onclick=e=>{e.stopPropagation();const c=map[b.dataset.update];openDiaryComposer(["settings",state.settingId,"children",c.id],c.name,c.id);});
+  app.querySelectorAll("[data-share]").forEach(b=>b.onclick=e=>{e.stopPropagation();const c=map[b.dataset.share];shareCode(c);});
+}
+
+function shareCode(c){
+  const link=location.origin+location.pathname;
+  const msg=`Hi! I use LittleNest 🪺 to share ${c.name}'s daily updates and learning journey.\n\nTo connect:\n1. Open ${link}\n2. Create an account & tap "I'm a parent"\n3. Enter your code: ${c.setupCode}\n\nThat's it — you'll see everything in one place.`;
+  if(navigator.share){navigator.share({title:"LittleNest invite",text:msg}).catch(()=>{});}
+  else{navigator.clipboard?.writeText(msg);toast("✓ Copied","Invite message copied to clipboard");}
 }
 
 /* ── add child ── */
 function openAddChild(){
+  let colour=COLOURS[0];
   const sheet=mountSheet("Add a child",`
     <div class="field-row"><div class="field-label">Child's name</div><input id="cn" placeholder="e.g. Evie Harper"></div>
-    <div class="field-row"><div class="field-label">Date of birth or age</div><input id="dob" placeholder="e.g. 2y 4m or 12/03/2022"></div>
+    <div class="field-row"><div class="field-label">Date of birth</div><input id="dob" placeholder="DD/MM/YYYY — e.g. 12/03/2022"></div>
+    <div class="field-label">Colour</div>
+    <div id="cols" style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:18px">
+      ${COLOURS.map((c,i)=>`<button data-c="${c}" style="width:38px;height:38px;border-radius:12px;border:3px solid ${i===0?'var(--ink)':'transparent'};background:${c};cursor:pointer"></button>`).join("")}
+    </div>
     <p class="muted" style="font-size:12.5px;line-height:1.5;margin:0 0 18px">A unique code is generated automatically. Share it with the parent — they enter it when they sign up and are instantly linked.</p>
     <button class="btn btn-primary" id="save">Add child &amp; generate code</button>`);
+  sheet.querySelectorAll("#cols button").forEach(b=>b.onclick=()=>{colour=b.dataset.c;sheet.querySelectorAll("#cols button").forEach(x=>x.style.border="3px solid transparent");b.style.border="3px solid var(--ink)";});
   $("#save").onclick=async()=>{
-    const name=$("#cn").value.trim();if(!name)return;
+    const name=$("#cn").value.trim();if(!name){$("#cn").focus();return;}
     $("#save").disabled=true;$("#save").textContent="Adding…";
     const code="LN-"+Math.random().toString(36).substring(2,6).toUpperCase();
-    const colour=COLOURS[Math.floor(Math.random()*COLOURS.length)];
     const childRef=await addDoc(collection(db,"settings",state.settingId,"children"),{name,dob:$("#dob").value.trim(),colour,parentEmails:[],parentUids:[],setupCode:code,createdAt:serverTimestamp()});
     await setDoc(doc(db,"invites",code),{settingId:state.settingId,childId:childRef.id,childName:name,status:"pending",createdAt:serverTimestamp()});
     sheet.remove();
@@ -434,115 +636,139 @@ async function renderParentHome(){
   try{
     const ids=state.profile.childIds||[];
     const kids=[];
-    for(const id of ids){
-      const s=await getDoc(doc(db,"settings",state.settingId,"children",id));
-      if(s.exists())kids.push({id,...s.data()});
-    }
+    for(const id of ids){const s=await getDoc(doc(db,"settings",state.settingId,"children",id));if(s.exists())kids.push({id,...s.data()});}
     if(kids.length===1){openChild(kids[0].id,kids[0],false);return;}
     app.innerHTML=`
-      <div class="topbar"><button class="back" id="out">Sign out</button>
-        <h1 style="font-size:30px;color:var(--violet);margin-top:6px">My children</h1></div>
+      <div class="topbar"><div style="display:flex;justify-content:space-between;align-items:center">
+        <h1 style="font-size:30px">My children</h1>
+        <button class="back" id="out">Sign out</button></div></div>
       <div class="screen" style="padding-top:6px" id="list"></div>`;
     $("#out").onclick=()=>signOut(auth);
-    $("#list").innerHTML=kids.map(c=>`
-      <button class="card row" style="width:100%;padding:13px;border:1px solid var(--line);background:#fff;text-align:left" data-id="${c.id}">
+    $("#list").innerHTML=kids.map((c,i)=>`
+      <div class="card tap fade" style="animation-delay:${i*.05}s;padding:14px;display:flex;align-items:center;gap:13px" data-id="${c.id}">
         <div class="avatar" style="background:${c.colour||'#6C4AE2'}">${esc((c.name||"?")[0])}</div>
-        <div style="flex:1"><div style="font-weight:800;font-size:17px">${esc(c.name)}</div></div>
-        <span class="muted" style="font-size:22px">›</span></button>`).join("");
-    $("#list").querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>{
-      const c=kids.find(x=>x.id===b.dataset.id);openChild(c.id,c,false);
-    });
+        <div style="flex:1"><div style="font-weight:900;font-size:17px">${esc(c.name)}</div>${ageFromDob(c.dob)?`<div class="muted" style="font-size:12.5px;font-weight:700">${esc(ageFromDob(c.dob))}</div>`:""}</div>
+        <span class="muted" style="font-size:22px">›</span></div>`).join("");
+    $("#list").querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>{const c=kids.find(x=>x.id===b.dataset.id);openChild(c.id,c,false);});
   }catch(e){app.innerHTML=`<div class="splash"><p class="err">${esc(e.message)}</p></div>`;}
 }
 
-/* ── child detail ── */
+/* ── CHILD DETAIL with bottom nav ── */
 function openChild(childId,child,admin,forcedTab=null){
   clearSubs();
   let tab=forcedTab||"diary";
   state.activeChildId=childId;state.currentTab=tab;
-  if(admin&&unread[childId]&&tab==="chat"){unread[childId]=0;refreshDashboardBadge(childId);}
+  if(admin&&tab==="chat"){unread[childId]=0;refreshBadges();}
   const base=["settings",state.settingId,"children",childId];
-  const tabs=admin
-    ?[{k:"diary",l:"Diary"},{k:"journey",l:"Journey"},{k:"messages",l:"Messages"},{k:"profile",l:"Profile"}]
-    :[{k:"diary",l:"Diary"},{k:"journey",l:"Journey"},{k:"messages",l:"Messages"},{k:"profile",l:"My details"}];
-
+  const tabs=[
+    {k:"diary",l:"Diary",ic:"📔"},
+    {k:"journey",l:"Journey",ic:"🌱"},
+    {k:"chat",l:"Messages",ic:"💬"},
+    {k:"profile",l:admin?"Profile":"Details",ic:admin?"👤":"⚙️"}
+  ];
   app.innerHTML=`
     <div class="topbar">
-      <button class="back" id="back">‹ ${admin?"All children":"My children"}</button>
-      <h1 style="font-size:30px;color:${child.colour||'var(--violet)'};margin-top:6px">${esc(child.name)}</h1>
-      <p class="muted" style="margin:2px 0 0;font-weight:600">${admin?"Childminder view":"Today"}</p>
+      <button class="back" id="back">‹ ${admin?"Home":"My children"}</button>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:6px">
+        <div class="avatar lg" style="background:${child.colour||'#6C4AE2'}">${esc((child.name||"?")[0])}</div>
+        <div>
+          <h1 style="font-size:27px;color:${child.colour||'var(--violet)'}">${esc(child.name)}</h1>
+          <p class="muted" style="margin:2px 0 0;font-weight:700;font-size:13px">${admin?(ageFromDob(child.dob)||"Childminder view"):"Today"}</p>
+        </div>
+      </div>
     </div>
-    <div class="tabs">${tabs.map(t=>`<button class="tab${tab===t.k?" on":""}" data-t="${t.k}">${t.l}</button>`).join("")}</div>
-    <div id="body" class="screen" style="padding-top:0"></div>
-    <div id="fabwrap"></div>`;
-
-  $("#back").onclick=()=>{
-    if(admin)renderMinderHome();else renderParentHome();
-  };
-  app.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+    <div id="body" class="screen" style="padding-top:2px"></div>
+    <div id="fabwrap"></div>
+    <div class="bottomnav">${tabs.map(t=>`<button class="navbtn${tab===t.k?" on":""}" data-t="${t.k}"><span class="ic">${t.ic}</span>${t.l}${t.k==="chat"?'<span class="nbadge" id="navbadge"></span>':""}</button>`).join("")}</div>`;
+  $("#back").onclick=()=>{if(admin)renderMinderHome();else renderParentHome();};
+  app.querySelectorAll(".navbtn").forEach(t=>t.onclick=()=>{
     tab=t.dataset.t;state.currentTab=tab;
-    if(admin&&tab==="messages"){unread[childId]=0;refreshDashboardBadge(childId);}
-    app.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===t));
+    if(admin&&tab==="chat"){unread[childId]=0;refreshBadges();}
+    app.querySelectorAll(".navbtn").forEach(x=>x.classList.toggle("on",x===t));
     mount();
   });
+  refreshBadges();
   mount();
 
   function mount(){
     clearSubs();
     const body=$("#body"),fw=$("#fabwrap");fw.innerHTML="";
-    if(tab==="diary")    mountDiary(body,fw);
-    if(tab==="journey")  mountJourney(body,fw);
-    if(tab==="messages") mountChat(body);
-    if(tab==="profile")  mountProfile(body,admin,childId,child);
+    body.scrollTop=0;window.scrollTo(0,0);
+    if(tab==="diary")   mountDiary(body,fw);
+    if(tab==="journey") mountJourney(body,fw);
+    if(tab==="chat")    mountChat(body);
+    if(tab==="profile") mountProfile(body,admin,childId,child);
   }
 
-  /* diary */
+  /* DIARY with date strip + attendance summary */
   function mountDiary(body,fw){
-    body.innerHTML='<div id="d"><div class="spin"></div></div>';
+    let sel=todayKey();
+    const days=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days.push(d);}
+    body.innerHTML=`
+      <div class="datestrip" id="ds">${days.map(d=>{const k=keyOf(d);const isT=k===todayKey();
+        return `<button class="daypill${k===sel?" on":""}" data-k="${k}"><div class="dow">${isT?"Today":d.toLocaleDateString("en-GB",{weekday:"short"})}</div><div class="dnum">${d.getDate()}</div></button>`;}).join("")}</div>
+      <div id="attsum"></div>
+      <div id="d"><div class="spin"></div></div>`;
     const q=query(collection(db,...base,"entries"),orderBy("createdAt","desc"));
-    subs.push(onSnapshot(q,s=>{
-      const del=admin?`<button class="btn btn-danger" id="del">🗑️ Delete ${esc(child.name)}'s profile</button>`:"";
-      $("#d").innerHTML=(s.empty?`<p class="muted center" style="padding:46px 0">No updates yet today.</p>`:s.docs.map(d=>entryCard(d.data())).join(""))+del;
-      if(admin){
-        const db_=$('#del');if(!db_)return;
-        db_.onclick=async()=>{
-          if(!confirm(`Permanently delete ${child.name}'s profile and all records?`))return;
-          db_.disabled=true;db_.textContent="Deleting…";
-          try{
-            await deleteDoc(doc(db,"settings",state.settingId,"children",childId));
-            if(child.setupCode)await deleteDoc(doc(db,"invites",child.setupCode));
-            renderMinderHome();
-          }catch(e){alert(e.message);db_.disabled=false;db_.textContent=`🗑️ Delete ${child.name}'s profile`;}
-        };
+    let allDocs=[];
+    const renderDay=()=>{
+      const items=allDocs.filter(d=>dateOfEntry(d.data().createdAt)===sel);
+      const dayLabel=sel===todayKey()?"today":new Date(sel).toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});
+      if(!items.length){
+        $("#d").innerHTML=`<div class="empty"><div class="em">☀️</div><div class="et">Nothing logged ${sel===todayKey()?"yet "+dayLabel:"on "+dayLabel}</div><div class="es">${admin?"Tap + to add the first update.":"Check back later for updates."}</div></div>`;
+      }else{
+        $("#d").innerHTML=`<div class="card" style="padding:6px 4px"><div style="padding:6px 12px">${items.map((d,i)=>timelineRow(d.data(),i,i===items.length-1)).join("")}</div></div>
+        ${admin?`<button class="btn btn-soft" id="summary" style="margin-top:14px">📋 Share ${esc(child.name.split(" ")[0])}'s day summary</button>`:""}`;
+        const sm=$("#summary");if(sm)sm.onclick=()=>shareDaySummary(child,items.map(d=>d.data()),sel);
       }
-    }));
-    if(admin){fw.innerHTML=`<button class="fab" id="addE">＋ Add update</button>`;$("#addE").onclick=()=>openDiaryComposer(base,child.name,childId);}
+    };
+    renderAttendanceSummary(sel);
+    subs.push(onSnapshot(q,s=>{allDocs=s.docs;renderDay();}));
+    $("#ds").querySelectorAll(".daypill").forEach(p=>p.onclick=()=>{
+      sel=p.dataset.k;$("#ds").querySelectorAll(".daypill").forEach(x=>x.classList.toggle("on",x===p));
+      renderAttendanceSummary(sel);renderDay();
+    });
+    if(admin){fw.innerHTML=`<button class="fab" id="addE">＋</button>`;$("#addE").onclick=()=>openDiaryComposer(base,child.name,childId);}
+  }
+  async function renderAttendanceSummary(key){
+    const el=$("#attsum");if(!el)return;
+    try{
+      const a=await getDoc(doc(db,...base,"attendance",key));
+      if(a.exists()&&(a.data().signInAt||a.data().signOutAt)){
+        const d=a.data();
+        el.innerHTML=`<div class="info-card" style="display:flex;align-items:center;gap:14px;padding:13px 16px">
+          <div class="iconbox" style="background:var(--greenbg)">🕗</div>
+          <div style="flex:1"><div style="font-weight:900;font-size:13px">Attendance</div>
+          <div class="muted" style="font-size:13px;font-weight:700">${d.signInAt?"In "+fmtTime(d.signInAt):"—"}${d.signOutAt?"  ·  Out "+fmtTime(d.signOutAt):d.signInAt?"  ·  still in":""}</div></div>
+        </div>`;
+      }else el.innerHTML="";
+    }catch(e){el.innerHTML="";}
   }
 
-  /* journey */
+  /* JOURNEY */
   function mountJourney(body,fw){
-    body.innerHTML=`${admin?"":`<p class="muted" style="font-size:13px;margin:4px 0 14px;line-height:1.4">${esc(child.name)}'s learning journey — captured against the EYFS areas of learning.</p>`}<div id="j"><div class="spin"></div></div>`;
+    body.innerHTML=`${admin?"":`<p class="muted" style="font-size:13px;margin:4px 0 14px;line-height:1.45;font-weight:600">${esc(child.name)}'s learning journey — captured against the EYFS areas of learning.</p>`}<div id="j"><div class="spin"></div></div>`;
     const q=query(collection(db,...base,"observations"),orderBy("createdAt","desc"));
     subs.push(onSnapshot(q,s=>{
-      if(s.empty){$("#j").innerHTML=`<p class="muted center" style="padding:46px 0">No observations yet.</p>`;return;}
-      $("#j").innerHTML=s.docs.map(d=>obsCard(d.data())).join("");
+      if(s.empty){$("#j").innerHTML=`<div class="empty"><div class="em">🌱</div><div class="et">No observations yet</div><div class="es">${admin?"Capture a magic moment and tag it to the EYFS areas of learning.":"Observations will appear here as they're added."}</div></div>`;return;}
+      $("#j").innerHTML=s.docs.map((d,i)=>obsCard(d.data(),i)).join("");
     }));
-    if(admin){fw.innerHTML=`<button class="fab" id="addO">＋ New observation</button>`;$("#addO").onclick=()=>openObsComposer(base);}
+    if(admin){fw.innerHTML=`<button class="fab" id="addO">＋</button>`;$("#addO").onclick=()=>openObsComposer(base);}
   }
 
-  /* chat */
+  /* CHAT */
   function mountChat(body){
-    body.innerHTML=`<div id="c" style="padding-bottom:70px"><div class="spin"></div></div>
-      <div class="chatbar"><input id="msg" placeholder="Message…"><button class="btn btn-primary" id="send" style="width:auto;margin:0;padding:11px 20px">Send</button></div>`;
+    body.innerHTML=`<div id="c" style="padding-bottom:120px"><div class="spin"></div></div>
+      <div class="chatbar"><input id="msg" placeholder="Message…" autocomplete="off"><button class="btn btn-primary" id="send" style="width:auto;margin:0;padding:12px 20px">Send</button></div>`;
     const q=query(collection(db,...base,"messages"),orderBy("createdAt"));
     const me=admin?"fran":"parent";
     subs.push(onSnapshot(q,s=>{
-      $("#c").innerHTML=s.empty?`<p class="muted center" style="padding:46px 0">No messages yet.</p>`:
+      $("#c").innerHTML=s.empty?`<div class="empty" style="padding-top:60px"><div class="em">👋</div><div class="et">Say hello</div><div class="es">Messages between you and ${admin?"the parent":"your childminder"} appear here.</div></div>`:
         s.docs.map(d=>{const m=d.data(),mine=m.from===me;
           return `<div style="display:flex;justify-content:${mine?"flex-end":"flex-start"};margin-bottom:8px">
-            <div class="bubble" style="background:${mine?"var(--violet)":"#fff"};color:${mine?"#fff":"var(--ink)"};${mine?"":"border:1px solid var(--line)"}">${esc(m.text)}<div class="t">${fmtTime(m.createdAt)}</div></div></div>`;
+            <div class="bubble" style="background:${mine?"linear-gradient(135deg,#7857E8,#5B3CC9)":"#fff"};color:${mine?"#fff":"var(--ink)"};${mine?"":"border:1px solid var(--line)"}">${esc(m.text)}<div class="t" style="text-align:${mine?"right":"left"}">${fmtTime(m.createdAt)}</div></div></div>`;
         }).join("");
-      $("#c").scrollTop=1e9;
+      window.scrollTo(0,document.body.scrollHeight);
     }));
     const send=async()=>{const v=$("#msg").value.trim();if(!v)return;$("#msg").value="";
       await addDoc(collection(db,...base,"messages"),{from:me,text:v,createdAt:serverTimestamp()});};
@@ -550,135 +776,149 @@ function openChild(childId,child,admin,forcedTab=null){
     $("#msg").onkeydown=e=>{if(e.key==="Enter")send();};
   }
 
-  /* profile tab */
+  /* PROFILE */
   function mountProfile(body,admin,childId,child){
-    const phone=child.parentPhone||"";
-    const waPhone=phoneForWA(phone);
-
+    const waPhone=phoneForWA(child.parentPhone||"");
     if(admin){
-      // Minder sees parent's details
       body.innerHTML=`
         <div class="info-card">
           <div class="title">👤 Parent details</div>
           <div class="info-row"><span class="label">Name</span><span class="value">${esc(child.parentName||"Not provided")}</span></div>
           <div class="info-row"><span class="label">Mobile</span><span class="value">${esc(child.parentPhone||"Not provided")}</span></div>
-          <div class="info-row"><span class="label">Email</span><span class="value">${esc((child.parentEmails||[])[0]||"")}</span></div>
+          <div class="info-row"><span class="label">Email</span><span class="value" style="font-size:12px">${esc((child.parentEmails||[])[0]||"—")}</span></div>
         </div>
         <div class="info-card">
           <div class="title">🚨 Emergency contact</div>
           <div class="info-row"><span class="label">Name</span><span class="value">${esc(child.emergencyName||"Not provided")}</span></div>
           <div class="info-row"><span class="label">Phone</span><span class="value">${esc(child.emergencyPhone||"Not provided")}</span></div>
         </div>
-        ${child.medicalNotes?`<div class="info-card"><div class="title">🏥 Medical notes</div><p style="font-size:14px;line-height:1.5;margin:4px 0">${esc(child.medicalNotes)}</p></div>`:""}
-        ${waPhone?`<button class="btn btn-green" id="wa" style="margin-top:8px">💬 WhatsApp ${esc(child.parentName||"parent")}</button>`:`<p class="muted center" style="font-size:13px;margin-top:16px">Parent hasn't added their mobile yet.</p>`}`;
-      if(waPhone){
-        $("#wa").onclick=()=>{
-          const msg=`Hi ${child.parentName||""}! Just a quick update from LittleNest 🪺`;
-          window.open(`https://wa.me/${waPhone}?text=${encodeURIComponent(msg)}`,"_blank");
-        };
-      }
-    } else {
-      // Parent sees and can edit their own details
-      const uid=auth.currentUser?.uid;
+        ${child.medicalNotes?`<div class="info-card" style="border-left:3px solid var(--danger)"><div class="title">🏥 Medical notes</div><p style="font-size:14px;line-height:1.5;margin:2px 0 0">${esc(child.medicalNotes)}</p></div>`:""}
+        ${waPhone?`<button class="btn btn-green" id="wa" style="margin-top:8px">💬 WhatsApp ${esc((child.parentName||"parent").split(" ")[0])}</button>`:`<p class="muted center" style="font-size:13px;margin-top:16px">Parent hasn't added their mobile yet.</p>`}
+        <button class="btn btn-danger" id="del" style="margin-top:18px">Delete ${esc(child.name)}'s profile</button>`;
+      if(waPhone)$("#wa").onclick=()=>window.open(`https://wa.me/${waPhone}?text=${encodeURIComponent("Hi "+(child.parentName||"")+"! Quick update from LittleNest 🪺")}`,"_blank");
+      $("#del").onclick=async()=>{
+        if(!confirm(`Permanently delete ${child.name}'s profile and all records?`))return;
+        const b=$("#del");b.disabled=true;b.textContent="Deleting…";
+        try{await deleteDoc(doc(db,"settings",state.settingId,"children",childId));if(child.setupCode)await deleteDoc(doc(db,"invites",child.setupCode));renderMinderHome();}
+        catch(e){alert(e.message);b.disabled=false;b.textContent=`Delete ${child.name}'s profile`;}
+      };
+    }else{
       body.innerHTML=`
-        <div style="margin-bottom:16px">
-          <div class="field-label">Your name</div>
-          <input id="pname" value="${esc(child.parentName||"")}" placeholder="Full name">
-        </div>
-        <div style="margin-bottom:16px">
-          <div class="field-label">Your mobile</div>
-          <input id="pphone" type="tel" value="${esc(child.parentPhone||"")}" placeholder="07700 900123">
-        </div>
-        <div style="margin-bottom:16px">
-          <div class="field-label">Emergency contact name</div>
-          <input id="ename" value="${esc(child.emergencyName||"")}" placeholder="Name">
-        </div>
-        <div style="margin-bottom:16px">
-          <div class="field-label">Emergency contact number</div>
-          <input id="ephone" type="tel" value="${esc(child.emergencyPhone||"")}" placeholder="07700 900456">
-        </div>
-        <div style="margin-bottom:20px">
-          <div class="field-label">Medical notes</div>
-          <textarea id="medical" rows="3" placeholder="Allergies, medication, GP details…">${esc(child.medicalNotes||"")}</textarea>
-        </div>
-        <button class="btn btn-primary" id="savedet">Save details</button>`;
+        <div class="field-row"><div class="field-label">Your name</div><input id="pname" value="${esc(child.parentName||"")}" placeholder="Full name"></div>
+        <div class="field-row"><div class="field-label">Your mobile</div><input id="pphone" type="tel" value="${esc(child.parentPhone||"")}" placeholder="07700 900123"></div>
+        <div class="field-row"><div class="field-label">Emergency contact name</div><input id="ename" value="${esc(child.emergencyName||"")}" placeholder="Name"></div>
+        <div class="field-row"><div class="field-label">Emergency contact number</div><input id="ephone" type="tel" value="${esc(child.emergencyPhone||"")}" placeholder="07700 900456"></div>
+        <div class="field-row"><div class="field-label">Medical notes</div><textarea id="medical" rows="3" placeholder="Allergies, medication, GP details…">${esc(child.medicalNotes||"")}</textarea></div>
+        <button class="btn btn-primary" id="savedet">Save details</button>
+        <button class="btn btn-ghost" id="psignout" style="color:var(--sub);margin-top:6px">Sign out</button>`;
+      $("#psignout").onclick=()=>signOut(auth);
       $("#savedet").onclick=async()=>{
-        const btn=$("#savedet");btn.disabled=true;btn.textContent="Saving…";
+        const b=$("#savedet");b.disabled=true;b.textContent="Saving…";
         try{
           await updateDoc(doc(db,"settings",state.settingId,"children",childId),{
-            parentName:$("#pname").value.trim(),
-            parentPhone:$("#pphone").value.trim(),
-            emergencyName:$("#ename").value.trim(),
-            emergencyPhone:$("#ephone").value.trim(),
-            medicalNotes:$("#medical").value.trim()
-          });
-          btn.textContent="✓ Saved";
-          setTimeout(()=>{btn.disabled=false;btn.textContent="Save details";},2000);
-          // Update local child object so minder sees fresh data on next profile view
-          child.parentName=$("#pname").value.trim();
-          child.parentPhone=$("#pphone").value.trim();
-        }catch(e){btn.disabled=false;btn.textContent="Save details";alert(e.message);}
+            parentName:$("#pname").value.trim(),parentPhone:$("#pphone").value.trim(),
+            emergencyName:$("#ename").value.trim(),emergencyPhone:$("#ephone").value.trim(),
+            medicalNotes:$("#medical").value.trim()});
+          child.parentName=$("#pname").value.trim();child.parentPhone=$("#pphone").value.trim();
+          b.textContent="✓ Saved";setTimeout(()=>{b.disabled=false;b.textContent="Save details";},1800);
+        }catch(e){b.disabled=false;b.textContent="Save details";alert(e.message);}
       };
     }
   }
 }
 
-/* ── cards ── */
-function entryCard(e){
-  const t=TYPES[e.type]||TYPES.note;
-  return `<div class="card fade"><div style="padding:14px;display:flex;gap:12px">
-    <div class="iconbox" style="background:${t.tint}">${t.icon}</div>
-    <div style="flex:1">
-      <div style="display:flex;justify-content:space-between;align-items:baseline">
-        <span style="font-weight:800;font-size:14px">${t.label}</span>
-        <span class="muted" style="font-size:12px;font-weight:700">${fmtTime(e.createdAt)}</span>
-      </div>
-      ${e.detail?`<div style="font-size:14.5px;line-height:1.45;margin-top:2px">${esc(e.detail)}</div>`:""}
-    </div></div></div>`;
+/* ── day summary ── */
+function shareDaySummary(child,entries,key){
+  const dayLabel=key===todayKey()?"today":new Date(key).toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});
+  const lines=entries.slice().reverse().map(e=>{
+    const t=TYPES[e.type]||TYPES.note;
+    let extra="";
+    if(e.startTime&&e.endTime)extra=` (${e.startTime}–${e.endTime})`;
+    else if(e.portion)extra=` — ate ${e.portion.toLowerCase()}`;
+    return `${t.icon} ${fmtTime(e.createdAt)} ${t.label}${extra}${e.detail?": "+e.detail:""}`;
+  }).join("\n");
+  const msg=`🪺 ${child.name}'s day — ${dayLabel}\n\n${lines}\n\nShared via LittleNest`;
+  if(navigator.share)navigator.share({title:child.name+"'s day",text:msg}).catch(()=>{});
+  else{navigator.clipboard?.writeText(msg);toast("✓ Copied","Day summary copied to clipboard");}
 }
-function obsCard(o){
-  return `<div class="card fade"><div style="padding:16px">
-    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
-      <span style="font-family:'Fraunces',serif;font-weight:600;font-size:18px">${esc(o.title)}</span>
-      <span class="muted" style="font-size:12px;font-weight:700">${fmtDate(o.createdAt)}</span>
+
+/* ── cards ── */
+function timelineRow(e,i,last){
+  const t=TYPES[e.type]||TYPES.note;
+  let meta="";
+  if(e.startTime&&e.endTime)meta=`<span class="pill pill-gold" style="margin-left:6px">${esc(e.startTime)}–${esc(e.endTime)}</span>`;
+  else if(e.portion)meta=`<span class="pill pill-gold" style="margin-left:6px">Ate ${esc(e.portion.toLowerCase())}</span>`;
+  return `<div class="tl-item">
+    <div class="tl-rail"><div class="iconbox" style="background:${t.tint};width:38px;height:38px;font-size:18px">${t.icon}</div>${last?"":'<div class="tl-line"></div>'}</div>
+    <div style="flex:1;padding-bottom:${last?"4":"16"}px;min-width:0">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+        <span style="font-weight:900;font-size:14.5px">${t.label}${meta}</span>
+        <span class="muted" style="font-size:12px;font-weight:800;flex-shrink:0">${fmtTime(e.createdAt)}</span>
+      </div>
+      ${e.detail?`<div style="font-size:14px;line-height:1.45;margin-top:3px;color:var(--ink2)">${esc(e.detail)}</div>`:""}
+    </div></div>`;
+}
+function obsCard(o,i){
+  return `<div class="card fade" style="animation-delay:${(i||0)*.04}s"><div style="padding:16px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;gap:8px">
+      <span style="font-family:'Fraunces',serif;font-weight:600;font-size:19px;line-height:1.2">${esc(o.title)}</span>
+      <span class="muted" style="font-size:12px;font-weight:800;flex-shrink:0">${fmtDate(o.createdAt)}</span>
     </div>
-    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">${(o.areas||[]).map(areaTag).join("")}</div>
-    <div style="font-size:14.5px;line-height:1.5">${esc(o.note)}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:11px">${(o.areas||[]).map(areaTag).join("")}</div>
+    <div style="font-size:14.5px;line-height:1.55">${esc(o.note)}</div>
     ${o.nextSteps?`<div class="next"><div class="lbl">Next steps</div><div style="font-size:13.5px;line-height:1.45">${esc(o.nextSteps)}</div></div>`:""}
   </div></div>`;
 }
-function areaTag(a){const x=AREAS[a];if(!x)return"";
-  return `<span class="areatag" style="background:${x.colour}22"><span class="dot" style="background:${x.colour}"></span>${x.short}</span>`;}
+function areaTag(a){const x=AREAS[a];if(!x)return"";return `<span class="areatag" style="background:${x.colour}22"><span class="dot" style="background:${x.colour}"></span>${x.short}</span>`;}
 
 /* ── composers ── */
 function openDiaryComposer(base,childName,childId){
-  let type="meal";
-  // Get parent phone from child doc for WhatsApp
+  let type="meal",extra={};
   let parentPhone=null;
-  getDoc(doc(db,...base.slice(0,-2),...base.slice(-2))).then(s=>{if(s.exists())parentPhone=s.data().parentPhone;}).catch(()=>{});
-  // Actually base is ["settings",sid,"children",cid] so:
   getDoc(doc(db,"settings",state.settingId,"children",childId)).then(s=>{if(s.exists())parentPhone=s.data().parentPhone;}).catch(()=>{});
-
   const sheet=mountSheet("New update",`
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px" id="types">
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px" id="types">
       ${Object.entries(TYPES).map(([k,v])=>`<button class="chip${k==="meal"?" on":""}" data-k="${k}">${v.icon} ${v.label}</button>`).join("")}
     </div>
-    <textarea id="detail" rows="3" placeholder="What happened? e.g. Had a big lunch and went down well for a nap…"></textarea>
-    <div class="green-box">
+    <div id="extra"></div>
+    <textarea id="detail" rows="3" placeholder="${TYPES.meal.ph}"></textarea>
+    <div class="green-box" style="margin-top:14px">
       <input type="checkbox" id="wa" style="width:auto;cursor:pointer">
-      <label for="wa" style="font-size:13.5px;font-weight:700;color:var(--green);cursor:pointer">📢 Also alert via WhatsApp</label>
+      <label for="wa" style="font-size:13.5px;font-weight:800;color:var(--green);cursor:pointer">📲 Also alert parent via WhatsApp</label>
     </div>
     <button class="btn btn-primary" id="save">Post to parent</button>`);
-  sheet.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{type=c.dataset.k;sheet.querySelectorAll(".chip").forEach(x=>x.classList.toggle("on",x===c));});
+  const renderExtra=()=>{
+    const t=TYPES[type];const ex=$("#extra");extra={};
+    $("#detail").placeholder=t.ph;
+    if(t.times){
+      ex.innerHTML=`<div style="display:flex;gap:10px;margin-bottom:14px">
+        <div style="flex:1"><div class="field-label">Asleep</div><input type="time" id="st"></div>
+        <div style="flex:1"><div class="field-label">Awake</div><input type="time" id="et"></div></div>`;
+    }else if(t.portion){
+      ex.innerHTML=`<div class="field-label">How much did they eat?</div><div style="display:flex;gap:8px;margin-bottom:14px" id="ports">${PORTIONS.map((p,i)=>`<button class="chip${i===0?" on":""}" data-p="${p}" style="flex:1;justify-content:center">${p}</button>`).join("")}</div>`;
+      extra.portion="All";
+      ex.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{extra.portion=b.dataset.p;ex.querySelectorAll("[data-p]").forEach(x=>x.classList.toggle("on",x===b));});
+    }else if(t.opts){
+      ex.innerHTML=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px" id="opts">${t.opts.map(o=>`<button class="chip" data-o="${o}" style="flex:1;justify-content:center;min-width:70px">${o}</button>`).join("")}</div>`;
+      ex.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{const cur=$("#detail").value.trim();$("#detail").value=b.dataset.o;ex.querySelectorAll("[data-o]").forEach(x=>x.classList.toggle("on",x===b));});
+    }else ex.innerHTML="";
+  };
+  renderExtra();
+  sheet.querySelectorAll("#types .chip").forEach(c=>c.onclick=()=>{type=c.dataset.k;sheet.querySelectorAll("#types .chip").forEach(x=>x.classList.toggle("on",x===c));renderExtra();});
   $("#save").onclick=async()=>{
-    const detail=$("#detail").value.trim();if(!detail)return;
+    const detail=$("#detail").value.trim();
+    const t=TYPES[type];
+    const rec={type,detail,createdAt:serverTimestamp()};
+    if(t.times){const st=$("#st")?.value,et=$("#et")?.value;if(st)rec.startTime=st;if(et)rec.endTime=et;}
+    if(t.portion&&extra.portion)rec.portion=extra.portion;
+    if(!detail&&!rec.startTime&&!rec.portion){$("#detail").focus();return;}
     $("#save").disabled=true;$("#save").textContent="Posting…";
-    await addDoc(collection(db,...base,"entries"),{type,detail,createdAt:serverTimestamp()});
+    await addDoc(collection(db,...base,"entries"),rec);
     if($("#wa").checked){
-      const msg=`Hi! New ${TYPES[type]?.label||"update"} for ${childName} on LittleNest ${TYPES[type]?.icon||"📝"}\n\n"${detail}"`;
+      let summary=t.label;if(rec.startTime&&rec.endTime)summary+=` ${rec.startTime}–${rec.endTime}`;if(rec.portion)summary+=` (ate ${rec.portion.toLowerCase()})`;
+      const msg=`Hi! New update for ${childName} on LittleNest ${t.icon}\n\n${summary}${detail?`\n"${detail}"`:""}`;
       const waNum=phoneForWA(parentPhone);
-      const url=waNum?`https://wa.me/${waNum}?text=${encodeURIComponent(msg)}`:`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
-      window.open(url,"_blank");
+      window.open(waNum?`https://wa.me/${waNum}?text=${encodeURIComponent(msg)}`:`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`,"_blank");
     }
     sheet.remove();
   };
@@ -691,15 +931,11 @@ function openObsComposer(base){
     <div class="field-row"><textarea id="note" rows="4" placeholder="What did you see? Describe the moment…"></textarea></div>
     <div class="field-label" style="margin-bottom:8px">EYFS areas of learning</div>
     <div id="areas" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px">
-      ${Object.entries(AREAS).map(([k,v])=>`<button class="chip" data-k="${k}"><span class="dot" style="background:${v.colour};margin-right:6px;vertical-align:middle"></span>${v.short}${v.prime?'<span class="muted" style="font-weight:600"> ·prime</span>':""}</button>`).join("")}
+      ${Object.entries(AREAS).map(([k,v])=>`<button class="chip" data-k="${k}"><span class="dot" style="background:${v.colour}"></span>${v.short}${v.prime?'<span class="muted" style="font-weight:700"> ·prime</span>':""}</button>`).join("")}
     </div>
     <div class="field-row"><textarea id="next" rows="2" placeholder="Next steps (optional) — how will you extend this?"></textarea></div>
     <button class="btn btn-gold" id="save">Save to journey</button>`);
-  sheet.querySelectorAll("#areas .chip").forEach(c=>c.onclick=()=>{
-    const k=c.dataset.k;
-    if(areas.includes(k)){areas=areas.filter(x=>x!==k);c.classList.remove("on");}
-    else{areas.push(k);c.classList.add("on");}
-  });
+  sheet.querySelectorAll("#areas .chip").forEach(c=>c.onclick=()=>{const k=c.dataset.k;if(areas.includes(k)){areas=areas.filter(x=>x!==k);c.classList.remove("on");}else{areas.push(k);c.classList.add("on");}});
   $("#save").onclick=async()=>{
     const title=$("#title").value.trim(),note=$("#note").value.trim();
     if(!title||!note||!areas.length){alert("Add a title, a note and at least one EYFS area.");return;}
@@ -711,7 +947,7 @@ function openObsComposer(base){
 
 function mountSheet(title,inner){
   const bd=document.createElement("div");bd.className="backdrop";
-  bd.innerHTML=`<div class="sheet fade"><div class="grab"></div><h3 style="font-size:23px;margin-bottom:16px">${title}</h3>${inner}</div>`;
+  bd.innerHTML=`<div class="sheet"><div class="grab"></div><h3 style="font-size:24px;margin-bottom:16px">${title}</h3>${inner}</div>`;
   bd.onclick=e=>{if(e.target===bd)bd.remove();};
   document.body.appendChild(bd);
   return bd;
