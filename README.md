@@ -222,6 +222,21 @@ The old deployment at `oliverminskip.github.io/LittleNest/` is superseded. Once
 Firebase Hosting is live, turn Pages off under **Settings → Pages → Source → None**.
 Nothing in the repo publishes to Pages any more.
 
+Both builds talk to the same Firestore project, so during the cutover they have to
+coexist. Two compatibility points are handled for you:
+
+- **Message senders.** The old app wrote the childminder's messages as
+  `from: 'fran'` (`legacy/index.html:774`). Reads normalise it via
+  `senderRole()` in `src/lib/messages.ts` — without that, every message sent
+  before the rebuild would render as if the parent had sent it. The rules also
+  accept `'fran'` on create, but only from an authenticated owner of the
+  setting, so the old build keeps working until Pages is off. **Once it is,
+  drop `'fran'` from the `allow create` in `firestore.rules`** — the read-side
+  shim stays, since the historical documents do not change.
+- **Dates of birth.** The old app stored `DD/MM/YYYY`; `parseDob()` accepts both
+  that and ISO `YYYY-MM-DD`, so existing children keep working in the ratio
+  engine without a migration.
+
 ---
 
 ## Security model
@@ -241,7 +256,8 @@ fields. Invite codes are readable by any signed-in user so a code can be validat
 before an account exists, but `list` is denied so the code space cannot be enumerated,
 and a code can only be burned once.
 
-`npm run test:rules` asserts all of this against the emulator.
+`npm run test:rules` asserts all of this against the emulator, including that a
+parent cannot impersonate the childminder through the legacy `'fran'` marker.
 
 ---
 

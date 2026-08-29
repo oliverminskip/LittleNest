@@ -14,6 +14,7 @@ import {
   todayKey,
 } from '@/lib/dates';
 import { cn, phoneForWhatsApp } from '@/lib/format';
+import { senderRole } from '@/lib/messages';
 import { useEntries, useMessages, useObservations } from '@/hooks/useChildData';
 import { markThreadRead, sendMessage, updateChild } from '@/services/firebase/data';
 import { paths } from '@/services/firebase/paths';
@@ -387,7 +388,8 @@ export function ChatTab({
         />
       ) : (
         messages.map((message: Message) => {
-          const mine = message.from === role;
+          // Normalised so pre-rebuild messages sit on the right side.
+          const mine = senderRole(message.from) === role;
           return (
             <div key={message.id} className={cn('mb-2 flex', mine ? 'justify-end' : 'justify-start')}>
               <div

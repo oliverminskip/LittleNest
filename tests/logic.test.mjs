@@ -11,6 +11,7 @@ import assert from 'node:assert/strict';
 const { calculateFunding, fundedHoursPerWeek } = await import('../dist-test/funding.js');
 const { findBreaches, bandsForAge, upcomingOpenings, blocksForDay } = await import('../dist-test/ratios.js');
 const { buildInvoiceLines, contractedWeeklyHours, attendedHours } = await import('../dist-test/invoice.js');
+const { senderRole } = await import('../dist-test/messages.js');
 
 const BILLING = {
   hourlyRate: 6.5,
@@ -249,4 +250,16 @@ test('an empty period produces an empty invoice rather than a phantom charge', (
   });
   assert.equal(lines.length, 0);
   assert.equal(total, 0);
+});
+
+
+/* ── Legacy data compatibility ────────────────────────────── */
+
+test('the legacy "fran" sender is read as the childminder', () => {
+  // legacy/index.html wrote the minder's messages as `from: 'fran'`. Without
+  // this, every pre-rebuild message renders as if the parent sent it.
+  assert.equal(senderRole('fran'), 'minder');
+  assert.equal(senderRole('minder'), 'minder');
+  assert.equal(senderRole('parent'), 'parent');
+  assert.equal(senderRole(undefined), 'minder');
 });

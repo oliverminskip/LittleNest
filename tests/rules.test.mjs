@@ -219,6 +219,24 @@ await check('parent sends a message as "parent"', () =>
     }),
   ),
 );
+await check('minder may still write the legacy "fran" marker during cutover', () =>
+  assertSucceeds(
+    addDoc(collection(minderA, 'settings', SETTING_A, 'children', CHILD_1, 'messages'), {
+      from: 'fran',
+      text: 'Sent from the old GitHub Pages build',
+    }),
+  ),
+);
+await check('parent CANNOT impersonate the minder via the legacy marker', () =>
+  assertFails(
+    addDoc(collection(parentA, 'settings', SETTING_A, 'children', CHILD_1, 'messages'), {
+      from: 'fran',
+      text: 'Forged',
+      readByParent: true,
+      readByMinder: false,
+    }),
+  ),
+);
 await check('parent CANNOT impersonate the minder', () =>
   assertFails(
     addDoc(collection(parentA, 'settings', SETTING_A, 'children', CHILD_1, 'messages'), {

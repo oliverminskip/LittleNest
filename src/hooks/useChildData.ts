@@ -3,6 +3,7 @@ import { onSnapshot, orderBy, query, where } from 'firebase/firestore';
 import { paths } from '@/services/firebase/paths';
 import { useCollection } from './useCollection';
 import { todayKey } from '@/lib/dates';
+import { senderRole } from '@/lib/messages';
 import type { Attendance, DateKey, DiaryEntry, Message, Observation, OvertimeLog } from '@/types';
 
 export function useEntries(settingId: string | undefined, childId: string | undefined) {
@@ -116,8 +117,12 @@ export function useUnreadCounts(
       onSnapshot(
         query(paths.messages(settingId, childId), where(field, '==', false)),
         (snapshot) => {
-          // Messages the reader sent themselves are never "unread" for them.
-          const incoming = snapshot.docs.filter((d) => d.data().from !== role).length;
+          // Messages the reader sent themselves are never "unread" for them —
+          // via senderRole, so a legacy 'fran' message isn't counted against
+          // the childminder who wrote it.
+          const incoming = snapshot.docs.filter(
+            (d) => senderRole(d.data().from as string | undefined) !== role,
+          ).length;
           setCounts((previous) =>
             previous[childId] === incoming ? previous : { ...previous, [childId]: incoming },
           );

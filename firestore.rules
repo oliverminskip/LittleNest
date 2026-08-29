@@ -127,8 +127,14 @@ service cloud.firestore {
         match /messages/{messageId} {
           allow read: if isMinderOf(settingId) || isParentOf(settingId, childId);
 
-          allow create: if (isMinderOf(settingId) && request.resource.data.from == 'minder')
-                        || (isParentOf(settingId, childId) && request.resource.data.from == 'parent');
+          // 'fran' is the legacy single-file app's marker for the childminder.
+          // It is accepted only from an authenticated owner of this setting, so
+          // it grants nothing extra — it just keeps the old GitHub Pages build
+          // working during the cutover. Drop it once Pages is switched off.
+          allow create: if (isMinderOf(settingId)
+                            && request.resource.data.from in ['minder', 'fran'])
+                        || (isParentOf(settingId, childId)
+                            && request.resource.data.from == 'parent');
 
           // Updates exist only to flip read receipts; message text is immutable.
           allow update: if (isMinderOf(settingId) || isParentOf(settingId, childId))
