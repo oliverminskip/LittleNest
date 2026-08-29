@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --safe-b: env(safe-area-inset-bottom, 0px);
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html,
+  body {
+    @apply m-0 p-0;
+    overscroll-behavior-y: none;
+  }
+
+  body {
+    @apply bg-cream font-sans text-ink antialiased;
+    background-image:
+      radial-gradient(820px 360px at 50% -10%, rgba(108, 92, 231, 0.14), transparent),
+      radial-gradient(600px 300px at 90% 10%, rgba(201, 154, 60, 0.06), transparent);
+    background-attachment: fixed;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-display font-semibold leading-tight tracking-tight;
+    margin: 0;
+  }
+
+  /* Stop iOS Safari zooming the viewport on focus (needs >=16px). */
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
+@layer components {
+  .ln-input {
+    @apply w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-3 text-[15px] text-ink
+           outline-none transition placeholder:text-ink-faint
+           focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15;
+  }
+
+  .ln-label {
+    @apply mb-1.5 text-[12px] font-extrabold uppercase tracking-[1px] text-ink-sub;
+  }
+
+  .ln-eyebrow {
+    @apply text-[12.5px] font-extrabold uppercase tracking-[1.2px] text-ink-sub;
+  }
+
+  .ln-card {
+    @apply rounded-3xl border border-line bg-white shadow-sm;
+  }
+
+  .ln-skeleton {
+    @apply rounded-xl;
+    background: linear-gradient(90deg, #ece6f4 25%, #f5f1fb 50%, #ece6f4 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+  }
+
+  .ln-no-scrollbar {
+    scrollbar-width: none;
+  }
+  .ln-no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pb-safe {
+    padding-bottom: calc(1rem + var(--safe-b));
+  }
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}

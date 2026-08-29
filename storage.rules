@@ -1,0 +1,46 @@
+rules_version = '2';
+
+// Photo storage mirrors the Firestore tenancy exactly:
+//   settings/{settingId}/children/{childId}/photos/{file}
+//
+// so the same "minder owns the setting, parent owns the child" test applies
+// without a second lookup path. Photos are compressed to ~1200px client-side
+// before upload (see src/lib/image.ts); the 3 MB ceiling here is a backstop
+// against an uncompressed upload, not the expected size.
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isMinderOf(settingId) {
+      return signedIn()
+        && firestore.exists(/databases/(default)/documents/settings/$(settingId))
+        && firestore.get(/databases/(default)/documents/settings/$(settingId)).data.minderUid == request.auth.uid;
+    }
+
+    function isParentOf(settingId, childId) {
+      return signedIn()
+        && firestore.exists(/databases/(default)/documents/settings/$(settingId)/children/$(childId))
+        && request.auth.uid in firestore.get(
+             /databases/(default)/documents/settings/$(settingId)/children/$(childId)
+           ).data.parentUids;
+    }
+
+    match /settings/{settingId}/children/{childId}/photos/{fileName} {
+      allow read: if isMinderOf(settingId) || isParentOf(settingId, childId);
+
+      allow write: if isMinderOf(settingId)
+                   && request.resource.size < 3 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+
+      allow delete: if isMinderOf(settingId);
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

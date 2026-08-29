@@ -1,0 +1,31 @@
+name: Deploy security rules
+
+# Rules are deployed separately from hosting so a UI change can never silently
+# widen data access, and a rules fix can ship without a full rebuild.
+on:
+  push:
+    branches: [main]
+    paths:
+      - firestore.rules
+      - storage.rules
+      - firestore.indexes.json
+  workflow_dispatch:
+
+jobs:
+  rules:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Deploy Firestore & Storage rules
+        run: npx --yes firebase-tools@13 deploy --only firestore:rules,firestore:indexes,storage --project littlenest94 --non-interactive
