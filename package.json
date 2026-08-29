@@ -1,0 +1,41 @@
+{
+  "name": "littlenest",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "description": "The warm, lightweight management PWA for UK home childminders.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b --noEmit false --emitDeclarationOnly false || tsc -b",
+    "lint": "tsc -b",
+    "deploy": "npm run build && firebase deploy --only hosting",
+    "test:rules": "firebase emulators:exec --only firestore --project littlenest-rules-test \"node tests/rules.test.mjs\"",
+    "emulators": "firebase emulators:start",
+    "test:logic": "node scripts/build-test-bundles.mjs && node --test tests/logic.test.mjs",
+    "test": "npm run test:logic && npm run test:rules"
+  },
+  "dependencies": {
+    "browser-image-compression": "^2.0.2",
+    "firebase": "^10.14.1",
+    "jspdf": "^2.5.2",
+    "jspdf-autotable": "^3.8.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^3.0.4",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.3",
+    "autoprefixer": "^10.4.20",
+    "firebase-tools": "^13.35.1",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.15",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11",
+    "vite-plugin-pwa": "^0.21.1"
+  }
+}

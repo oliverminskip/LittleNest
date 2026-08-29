@@ -1,0 +1,12 @@
+{
+  "projects": {
+    "default": "littlenest94"
+  },
+  "targets": {
+    "littlenest94": {
+      "hosting": {
+        "app": ["littlenest94"]
+      }
+    }
+  }
+}

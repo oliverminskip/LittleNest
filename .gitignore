@@ -1,0 +1,17 @@
+node_modules
+dist
+dev-dist
+.DS_Store
+*.local
+.env
+.env.*
+!.env.example
+.firebase
+firebase-debug.log
+.vite
+
+dist-test
+firestore-debug.log
+ui-debug.log
+*-debug.log
+*.tsbuildinfo
