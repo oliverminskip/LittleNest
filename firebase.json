@@ -1,0 +1,21 @@
+{
+  "hosting": [
+    {
+      "target": "app",
+      "public": "app",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "headers": [
+        {
+          "source": "sw.js",
+          "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+        }
+      ],
+      "rewrites": [{ "source": "**", "destination": "/index.html" }]
+    },
+    {
+      "target": "landing",
+      "public": "landing",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
+    }
+  ]
+}

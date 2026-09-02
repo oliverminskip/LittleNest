@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="theme-color" content="#6C4AE2"/>
+<title>LittleNest — a warm little home for your child's day</title>
+<meta name="description" content="LittleNest is a simple family app for logging a child's day with their childminder — meals, sleep, activities and EYFS learning journeys, shared in one place."/>
+<link rel="apple-touch-icon" href="https://img.icons8.com/fluency/512/nest.png"/>
+<link rel="icon" href="https://img.icons8.com/fluency/512/nest.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F5F1FB; --card:#fff; --ink:#241B33; --sub:#7E7591;
+  --violet:#6C4AE2; --vd:#5436C4; --lilac:#EEE8FB; --line:#EBE4F4;
+  --sh-lg:0 12px 34px rgba(84,54,196,.18);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Nunito',system-ui,sans-serif;color:var(--ink);background:var(--bg);
+  background-image:radial-gradient(820px 360px at 50% -10%,rgba(108,74,226,.14),transparent);
+  background-attachment:fixed;
+}
+h1,h2,h3{font-family:'Fraunces',serif;font-weight:600;letter-spacing:-.5px;margin:0;line-height:1.15;}
+.wrap{max-width:720px;margin:0 auto;padding:0 22px;}
+.hero{padding:72px 22px 40px;text-align:center;}
+.mark{width:78px;height:78px;border-radius:24px;background:linear-gradient(145deg,#8466EC,#5436C4);margin:0 auto 20px;display:flex;align-items:center;justify-content:center;font-size:38px;box-shadow:0 16px 40px rgba(84,54,196,.42);}
+.hero h1{font-size:clamp(32px,6vw,48px);}
+.hero p{color:var(--sub);font-size:18px;font-weight:600;max-width:520px;margin:16px auto 0;line-height:1.5;}
+.cta{display:inline-flex;align-items:center;gap:8px;margin-top:30px;padding:16px 30px;border-radius:16px;
+  background:linear-gradient(135deg,#7857E8,#5B3CC9);color:#fff;font-weight:800;font-size:16px;text-decoration:none;box-shadow:var(--sh-lg);}
+.sub-cta{display:block;margin-top:14px;color:var(--sub);font-size:13.5px;font-weight:700;text-decoration:underline;}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;margin:50px 0;}
+.feat{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px 20px;box-shadow:0 1px 3px rgba(36,27,51,.06);}
+.feat .ic{font-size:26px;margin-bottom:10px;}
+.feat h3{font-size:17px;margin-bottom:6px;}
+.feat p{font-size:14px;color:var(--sub);line-height:1.5;margin:0;font-weight:600;}
+.strip{background:var(--lilac);border-radius:22px;padding:30px 26px;margin:10px 0 60px;text-align:center;}
+.strip h2{font-size:24px;margin-bottom:10px;}
+.strip p{color:var(--sub);font-weight:600;line-height:1.55;max-width:480px;margin:0 auto;}
+footer{text-align:center;padding:30px 22px 50px;color:var(--sub);font-size:12.5px;font-weight:700;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <div class="mark">🪺</div>
+    <h1>Your child's day, shared warmly.</h1>
+    <p>LittleNest is a simple family app that keeps parents and childminders connected — meals, sleep, activities and EYFS learning moments, all in one gentle daily record.</p>
+    <a class="cta" href="https://littlenest94.web.app">Open LittleNest ›</a>
+    <span class="sub-cta">Currently testing with a small group of childminders and families.</span>
+  </div>
+
+  <div class="grid">
+    <div class="feat"><div class="ic">🍽️</div><h3>Meals &amp; sleep</h3><p>A quick log of what they ate, when they napped, and how the day is going.</p></div>
+    <div class="feat"><div class="ic">🌱</div><h3>Learning journeys</h3><p>Observations tagged against the EYFS areas of learning, so progress is easy to see.</p></div>
+    <div class="feat"><div class="ic">💬</div><h3>One shared thread</h3><p>Messages and daily summaries in one place — no more piecing updates together from WhatsApp.</p></div>
+    <div class="feat"><div class="ic">🔒</div><h3>Just for your family</h3><p>Parents link in with a private code from their childminder. No photos, no public sharing.</p></div>
+  </div>
+
+  <div class="strip">
+    <h2>For childminders</h2>
+    <p>Log a child's day as it happens, generate a parent code in seconds, and send a shareable daily summary instead of an end-of-day WhatsApp catch-up.</p>
+  </div>
+</div>
+<footer>LittleNest — made for Fran's childminding families 🪺</footer>
+</body>
+</html>
