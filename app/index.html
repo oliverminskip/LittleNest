@@ -234,7 +234,10 @@ const TYPES={
   bottle:{label:"Bottle",icon:"🍼",tint:"#E9F0F6",ph:"How many oz / ml?"},
   activity:{label:"Activity",icon:"🧩",tint:"#E5F1E6",ph:"What did they get up to?"},
   mood:{label:"Mood",icon:"😊",tint:"#FBF1DC",ph:"How were they feeling?",opts:["Happy","Settled","Tired","Upset","Poorly"]},
-  note:{label:"Note",icon:"📝",tint:"#F2ECE6",ph:"Anything to share…"}
+  note:{label:"Note",icon:"📝",tint:"#F2ECE6",ph:"Anything to share…"},
+  accident:{label:"Accident",icon:"🚑",tint:"#FBE4E4",ph:"What happened?",auditable:true},
+  incident:{label:"Incident",icon:"⚠️",tint:"#FDEFD9",ph:"What happened?",auditable:true},
+  medication:{label:"Medication",icon:"💊",tint:"#E4ECFB",ph:"Reason for medication (optional)",auditable:true,medication:true}
 };
 const PORTIONS=["All","Most","Some","None"];
 const COLOURS=["#6C4AE2","#5B7B6F","#C26B4E","#9A7BB0","#D9A441","#5B9A8B","#8E6BA8","#C76B8A"];
@@ -796,9 +799,14 @@ function openChild(childId,child,admin,forcedTab=null){
       if(!items.length){
         $("#d").innerHTML=`<div class="empty"><div class="em">☀️</div><div class="et">Nothing logged ${sel===todayKey()?"yet "+dayLabel:"on "+dayLabel}</div><div class="es">${admin?"Tap + to add the first update.":"Check back later for updates."}</div></div>`;
       }else{
-        $("#d").innerHTML=`<div class="card" style="padding:6px 4px"><div style="padding:6px 12px">${items.map((d,i)=>timelineRow(d.data(),i,i===items.length-1)).join("")}</div></div>
+        $("#d").innerHTML=`<div class="card" style="padding:6px 4px"><div style="padding:6px 12px">${items.map((d,i)=>timelineRow(d.data(),d.id,i,i===items.length-1,admin)).join("")}</div></div>
         ${admin?`<button class="btn btn-soft" id="summary" style="margin-top:14px">📋 Share ${esc(child.name.split(" ")[0])}'s day summary</button>`:""}`;
         const sm=$("#summary");if(sm)sm.onclick=()=>shareDaySummary(base,child,items.map(d=>d.data()),sel);
+        $("#d").querySelectorAll("[data-ack]").forEach(b=>b.onclick=async()=>{
+          b.disabled=true;b.textContent="Saving…";
+          try{await updateDoc(doc(db,...base,"entries",b.dataset.ack),{acknowledgedAt:serverTimestamp(),acknowledgedBy:auth.currentUser.uid});}
+          catch(e){b.disabled=false;b.textContent="Acknowledge — I've seen this";alert(e.message);}
+        });
       }
     };
     renderAttendanceSummary(sel);
@@ -984,12 +992,23 @@ async function renderDaySummaryImage(child,entries,observations,dayLabel){
       let meta=t.label;
       if(e.startTime&&e.endTime)meta+=`  ${e.startTime}–${e.endTime}`;
       else if(e.portion)meta+=`  ·  ate ${e.portion.toLowerCase()}`;
-      ctx.font="800 15px Nunito, sans-serif";ctx.fillStyle="#241B33";
+      ctx.font="800 15px Nunito, sans-serif";ctx.fillStyle=t.auditable?"#C0455B":"#241B33";
       ctx.fillText(meta,PAD+34,y+16);
       ctx.font="700 12px Nunito, sans-serif";ctx.fillStyle="#7E7591";
       ctx.textAlign="right";ctx.fillText(fmtTime(e.createdAt),W-PAD,y+16);ctx.textAlign="left";
       y+=24;
-      if(e.detail){
+      if(t.medication){
+        const lines=wrap(`${e.medName||"Medication"} — ${e.medDose||""}`,"700 14px Nunito, sans-serif",W-PAD-34);
+        ctx.fillStyle="#3A3147";
+        for(const ln of lines){ctx.fillText(ln,PAD+34,y+12);y+=19;}
+      }else if(t.auditable){
+        for(const [label,val] of [["What happened",e.detail],["Injury",e.injury],["Action taken",e.actionTaken]]){
+          if(!val)continue;
+          const lines=wrap(`${label}: ${val}`,"600 14px Nunito, sans-serif",W-PAD-34);
+          ctx.fillStyle="#3A3147";
+          for(const ln of lines){ctx.fillText(ln,PAD+34,y+12);y+=19;}
+        }
+      }else if(e.detail){
         const lines=wrap(e.detail,"600 14px Nunito, sans-serif",W-PAD-34);
         ctx.fillStyle="#3A3147";
         for(const ln of lines){ctx.fillText(ln,PAD+34,y+12);y+=19;}
@@ -1150,8 +1169,37 @@ async function exportFullRecord(base,child){
 }
 
 /* ── cards ── */
-function timelineRow(e,i,last){
+function timelineRow(e,id,i,last,admin){
   const t=TYPES[e.type]||TYPES.note;
+  if(t.auditable){
+    const ackd=!!e.acknowledgedAt;
+    let details="";
+    if(t.medication){
+      details=`<div style="font-size:14px;line-height:1.45;margin-top:3px;color:var(--ink2)"><b>${esc(e.medName||"Medication")}</b> — ${esc(e.medDose||"")}</div>`;
+      if(e.detail)details+=`<div style="font-size:13.5px;line-height:1.4;margin-top:2px;color:var(--ink2)">Reason: ${esc(e.detail)}</div>`;
+      details+=`<div style="font-size:12.5px;font-weight:800;margin-top:4px;color:${e.consentConfirmed?"var(--green)":"var(--danger)"}">${e.consentConfirmed?"✓ Parent consent confirmed":"⚠ Consent not confirmed"}</div>`;
+    }else{
+      if(e.detail)details+=`<div style="font-size:14px;line-height:1.45;margin-top:3px;color:var(--ink2)"><b>What happened:</b> ${esc(e.detail)}</div>`;
+      if(e.injury)details+=`<div style="font-size:13.5px;line-height:1.4;margin-top:2px;color:var(--ink2)"><b>Injury:</b> ${esc(e.injury)}</div>`;
+      if(e.actionTaken)details+=`<div style="font-size:13.5px;line-height:1.4;margin-top:2px;color:var(--ink2)"><b>Action taken:</b> ${esc(e.actionTaken)}</div>`;
+    }
+    return `<div class="tl-item">
+      <div class="tl-rail"><div class="iconbox" style="background:${t.tint};width:38px;height:38px;font-size:18px">${t.icon}</div>${last?"":'<div class="tl-line"></div>'}</div>
+      <div style="flex:1;padding-bottom:${last?"4":"16"}px;min-width:0">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+          <span style="font-weight:900;font-size:14.5px;color:var(--danger)">${t.label}</span>
+          <span class="muted" style="font-size:12px;font-weight:800;flex-shrink:0">${fmtTime(e.createdAt)}</span>
+        </div>
+        ${details}
+        <div style="margin-top:8px">
+          ${ackd
+            ? `<span class="pill" style="background:var(--greenbg);color:var(--green)">✓ Acknowledged ${fmtDate(e.acknowledgedAt)} ${fmtTime(e.acknowledgedAt)}</span>`
+            : admin
+              ? `<span class="pill pill-out">Awaiting parent acknowledgement</span>`
+              : `<button class="btn btn-sm btn-danger" data-ack="${id}">Acknowledge — I've seen this</button>`}
+        </div>
+      </div></div>`;
+  }
   let meta="";
   if(e.startTime&&e.endTime)meta=`<span class="pill pill-gold" style="margin-left:6px">${esc(e.startTime)}–${esc(e.endTime)}</span>`;
   else if(e.portion)meta=`<span class="pill pill-gold" style="margin-left:6px">Ate ${esc(e.portion.toLowerCase())}</span>`;
@@ -1208,7 +1256,20 @@ function openDiaryComposer(base,childName,childId){
     }else if(t.opts){
       ex.innerHTML=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px" id="opts">${t.opts.map(o=>`<button class="chip" data-o="${o}" style="flex:1;justify-content:center;min-width:70px">${o}</button>`).join("")}</div>`;
       ex.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{const cur=$("#detail").value.trim();$("#detail").value=b.dataset.o;ex.querySelectorAll("[data-o]").forEach(x=>x.classList.toggle("on",x===b));});
+    }else if(t.medication){
+      ex.innerHTML=`<div class="field-row"><div class="field-label">Medication name</div><input id="medname" placeholder="e.g. Calpol (paracetamol)"></div>
+      <div class="field-row"><div class="field-label">Dose given</div><input id="meddose" placeholder="e.g. 5ml"></div>
+      <div class="green-box" style="margin:0 0 14px">
+        <input type="checkbox" id="medconsent" style="width:auto;cursor:pointer">
+        <label for="medconsent" style="font-size:13.5px;font-weight:800;color:var(--green);cursor:pointer">✓ Parent consent confirmed for this medication</label>
+      </div>`;
+    }else if(t.auditable){
+      ex.innerHTML=`<div class="field-row"><div class="field-label">Injury / affected area (optional)</div><input id="injury" placeholder="e.g. Graze to left knee"></div>`;
     }else ex.innerHTML="";
+    if(t.auditable){
+      const after=t.medication?"":`<div class="field-row" id="actionrow"><div class="field-label">Action taken</div><textarea id="actiontaken" rows="2" placeholder="First aid given, comfort offered, who was informed…"></textarea></div>`;
+      if(after)ex.insertAdjacentHTML("beforeend",after);
+    }
   };
   renderExtra();
   sheet.querySelectorAll("#types .chip").forEach(c=>c.onclick=()=>{type=c.dataset.k;sheet.querySelectorAll("#types .chip").forEach(x=>x.classList.toggle("on",x===c));renderExtra();});
@@ -1218,7 +1279,20 @@ function openDiaryComposer(base,childName,childId){
     const rec={type,detail,createdAt:serverTimestamp()};
     if(t.times){const st=$("#st")?.value,et=$("#et")?.value;if(st)rec.startTime=st;if(et)rec.endTime=et;}
     if(t.portion&&extra.portion)rec.portion=extra.portion;
-    if(!detail&&!rec.startTime&&!rec.portion){$("#detail").focus();return;}
+    if(t.medication){
+      rec.medName=$("#medname")?.value.trim()||"";
+      rec.medDose=$("#meddose")?.value.trim()||"";
+      rec.consentConfirmed=!!$("#medconsent")?.checked;
+      if(!rec.medName||!rec.medDose){alert("Enter the medication name and dose given.");return;}
+      if(!rec.consentConfirmed){alert("Please confirm parent consent before logging medication given.");return;}
+    }else if(t.auditable){
+      rec.injury=$("#injury")?.value.trim()||"";
+      rec.actionTaken=$("#actiontaken")?.value.trim()||"";
+      if(!detail){$("#detail").focus();return;}
+      if(!rec.actionTaken){alert("Add the action taken.");return;}
+    }
+    if(t.auditable){rec.acknowledgedAt=null;rec.acknowledgedBy=null;}
+    if(!detail&&!rec.startTime&&!rec.portion&&!t.medication){$("#detail").focus();return;}
     $("#save").disabled=true;$("#save").textContent="Posting…";
     await addDoc(collection(db,...base,"entries"),rec);
     if($("#wa").checked){
