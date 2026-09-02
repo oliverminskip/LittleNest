@@ -28,10 +28,20 @@ jobs:
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
-      - name: Deploy to Firebase Hosting
+      - name: Ensure Hosting sites + targets exist (idempotent, one-time in practice)
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: |
           echo "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-sa.json"
+          # littlenest94 (the default site) already exists; landing needs creating the first time.
+          firebase hosting:sites:create littlenest-landing --project littlenest94 || echo "littlenest-landing already exists, continuing"
+          firebase target:apply hosting app littlenest94 --project littlenest94
+          firebase target:apply hosting landing littlenest-landing --project littlenest94
+
+      - name: Deploy to Firebase Hosting
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-sa.json"
           firebase deploy --only hosting --project littlenest94 --non-interactive
