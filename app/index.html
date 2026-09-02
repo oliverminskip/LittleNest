@@ -352,6 +352,50 @@ function refreshBadges(){
   const nb=$("#navbadge");if(nb)nb.innerHTML=tot>0?`<span class="badge">${tot}</span>`:"";
 }
 
+/* ── onboarding walkthrough (first login only, skippable) ── */
+const ONBOARDING={
+  minder:[
+    {ic:"🪺",t:"Welcome to LittleNest",b:"A simple shared home for each child's day — meals, sleep, activities and EYFS learning moments, all in one place for you and their family."},
+    {ic:"📔",t:"Log the day as it happens",b:"Tap the ＋ on a child's card, or the ＋ in their Diary, for a quick meal, nap, nappy, activity or mood update. Use the Journey tab to capture EYFS observations."},
+    {ic:"🔑",t:"Bring parents in with a code",b:"Every child gets a unique parent code. Share it once — parents enter it when they sign up and they're instantly linked, no admin required."},
+    {ic:"📋",t:"Send a daily summary",b:"At the end of the day, tap “Share day summary” on the Diary tab to send a ready-made update straight to WhatsApp — no more typing it out by hand."}
+  ],
+  parent:[
+    {ic:"🪺",t:"Welcome to LittleNest",b:"See your child's day as it happens — meals, sleep, activities and their EYFS learning journey, shared by your childminder."},
+    {ic:"🔑",t:"Your parent code",b:"You've already linked up using the code your childminder gave you. Keep it safe if you ever need to link a second device."},
+    {ic:"🔔",t:"Stay in the loop",b:"You'll get a notification whenever there's a new update, and your childminder can send a shareable daily summary at the end of the day."}
+  ]
+};
+function maybeShowOnboarding(role){
+  if(state.profile?.onboarded)return;
+  const steps=ONBOARDING[role];if(!steps)return;
+  let i=0;
+  const bd=document.createElement("div");bd.className="backdrop";bd.style.alignItems="center";
+  const finish=async()=>{
+    bd.remove();
+    if(state.profile)state.profile.onboarded=true;
+    const u=auth.currentUser;
+    if(u){try{await updateDoc(doc(db,"users",u.uid),{onboarded:true});}catch(e){}}
+  };
+  const render=()=>{
+    const s=steps[i];
+    bd.innerHTML=`<div class="sheet fade" style="border-radius:26px;max-width:380px;text-align:center;padding:36px 26px 26px">
+      <div class="mark" style="margin:0 auto 18px">${s.ic}</div>
+      <h2 style="font-size:23px;margin-bottom:10px">${esc(s.t)}</h2>
+      <p class="muted" style="font-size:14.5px;line-height:1.55;margin:0 0 22px">${esc(s.b)}</p>
+      <div style="display:flex;justify-content:center;gap:6px;margin-bottom:20px">
+        ${steps.map((_,k)=>`<span style="width:${k===i?18:7}px;height:7px;border-radius:4px;background:${k===i?"var(--violet)":"var(--line)"};display:inline-block;transition:all .2s"></span>`).join("")}
+      </div>
+      <button class="btn btn-primary" id="ob-next">${i<steps.length-1?"Next":"Get started"}</button>
+      ${i<steps.length-1?'<button class="btn btn-ghost" id="ob-skip" style="color:var(--sub)">Skip</button>':""}
+    </div>`;
+    bd.querySelector("#ob-next").onclick=()=>{if(i<steps.length-1){i++;render();}else finish();};
+    const sk=bd.querySelector("#ob-skip");if(sk)sk.onclick=finish;
+  };
+  render();
+  document.body.appendChild(bd);
+}
+
 /* ── auth gate ── */
 onAuthStateChanged(auth,async user=>{
   clearSubs();
@@ -509,6 +553,7 @@ function renderParentProfileSetup(settingId,childId,childName){
 function renderMinderHome(){
   clearSubs();
   state.activeChildId=null;state.currentTab=null;
+  maybeShowOnboarding("minder");
   const name=(state.profile?.name||"").split(" ")[0]||"";
   const today=new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});
   app.innerHTML=`
@@ -652,6 +697,7 @@ function openAddChild(){
 async function renderParentHome(){
   clearSubs();
   state.activeChildId=null;state.currentTab=null;
+  maybeShowOnboarding("parent");
   app.innerHTML='<div class="spin"></div>';
   try{
     const ids=state.profile.childIds||[];
