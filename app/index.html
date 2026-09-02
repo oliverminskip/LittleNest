@@ -203,6 +203,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--violet);box-shadow:0 
   </div>
 </div>
 
+<script src="capacitor-bridge.js"></script>
 <script>
 window.onerror=function(msg,src,line){
   document.getElementById("app").innerHTML='<div style="padding:24px 20px;font-family:monospace;font-size:12px;color:#C0455B;background:#fff8f8;margin:20px;border-radius:12px"><b>Error (line '+line+'):</b><br>'+msg+'</div>';
@@ -273,6 +274,24 @@ async function requestNotifPermission(){
   if(!('Notification' in window))return;
   if(Notification.permission==='default') await Notification.requestPermission();
 }
+/* Capacitor Android shell only — the bridge (app/capacitor-bridge.js) no-ops on the web PWA */
+let nativePushWired=false;
+function initNativePush(){
+  if(!window.LittleNestPush)return;
+  if(!nativePushWired){
+    nativePushWired=true;
+    window.addEventListener("littlenest:push-token",async e=>{
+      const token=e.detail,u=auth.currentUser;
+      if(!token||!u)return;
+      try{await updateDoc(doc(db,"users",u.uid),{fcmTokens:arrayUnion(token)});}catch(err){}
+    });
+    window.addEventListener("littlenest:push-received",e=>{
+      const n=e.detail?.notification||e.detail||{};
+      toast(n.title||"LittleNest 🪺",n.body||"You have a new update.");
+    });
+  }
+  window.LittleNestPush.init();
+}
 function pushNotif(title,body,childId,onClick){
   toast(title,body,onClick);
   if(window.Notification&&Notification.permission==='granted'){
@@ -333,6 +352,50 @@ function refreshBadges(){
   const nb=$("#navbadge");if(nb)nb.innerHTML=tot>0?`<span class="badge">${tot}</span>`:"";
 }
 
+/* ── onboarding walkthrough (first login only, skippable) ── */
+const ONBOARDING={
+  minder:[
+    {ic:"🪺",t:"Welcome to LittleNest",b:"A simple shared home for each child's day — meals, sleep, activities and EYFS learning moments, all in one place for you and their family."},
+    {ic:"📔",t:"Log the day as it happens",b:"Tap the ＋ on a child's card, or the ＋ in their Diary, for a quick meal, nap, nappy, activity or mood update. Use the Journey tab to capture EYFS observations."},
+    {ic:"🔑",t:"Bring parents in with a code",b:"Every child gets a unique parent code. Share it once — parents enter it when they sign up and they're instantly linked, no admin required."},
+    {ic:"📋",t:"Send a daily summary",b:"At the end of the day, tap “Share day summary” on the Diary tab to send a ready-made update straight to WhatsApp — no more typing it out by hand."}
+  ],
+  parent:[
+    {ic:"🪺",t:"Welcome to LittleNest",b:"See your child's day as it happens — meals, sleep, activities and their EYFS learning journey, shared by your childminder."},
+    {ic:"🔑",t:"Your parent code",b:"You've already linked up using the code your childminder gave you. Keep it safe if you ever need to link a second device."},
+    {ic:"🔔",t:"Stay in the loop",b:"You'll get a notification whenever there's a new update, and your childminder can send a shareable daily summary at the end of the day."}
+  ]
+};
+function maybeShowOnboarding(role){
+  if(state.profile?.onboarded)return;
+  const steps=ONBOARDING[role];if(!steps)return;
+  let i=0;
+  const bd=document.createElement("div");bd.className="backdrop";bd.style.alignItems="center";
+  const finish=async()=>{
+    bd.remove();
+    if(state.profile)state.profile.onboarded=true;
+    const u=auth.currentUser;
+    if(u){try{await updateDoc(doc(db,"users",u.uid),{onboarded:true});}catch(e){}}
+  };
+  const render=()=>{
+    const s=steps[i];
+    bd.innerHTML=`<div class="sheet fade" style="border-radius:26px;max-width:380px;text-align:center;padding:36px 26px 26px">
+      <div class="mark" style="margin:0 auto 18px">${s.ic}</div>
+      <h2 style="font-size:23px;margin-bottom:10px">${esc(s.t)}</h2>
+      <p class="muted" style="font-size:14.5px;line-height:1.55;margin:0 0 22px">${esc(s.b)}</p>
+      <div style="display:flex;justify-content:center;gap:6px;margin-bottom:20px">
+        ${steps.map((_,k)=>`<span style="width:${k===i?18:7}px;height:7px;border-radius:4px;background:${k===i?"var(--violet)":"var(--line)"};display:inline-block;transition:all .2s"></span>`).join("")}
+      </div>
+      <button class="btn btn-primary" id="ob-next">${i<steps.length-1?"Next":"Get started"}</button>
+      ${i<steps.length-1?'<button class="btn btn-ghost" id="ob-skip" style="color:var(--sub)">Skip</button>':""}
+    </div>`;
+    bd.querySelector("#ob-next").onclick=()=>{if(i<steps.length-1){i++;render();}else finish();};
+    const sk=bd.querySelector("#ob-skip");if(sk)sk.onclick=finish;
+  };
+  render();
+  document.body.appendChild(bd);
+}
+
 /* ── auth gate ── */
 onAuthStateChanged(auth,async user=>{
   clearSubs();
@@ -346,6 +409,7 @@ onAuthStateChanged(auth,async user=>{
     if(snap.exists()){
       state.profile=snap.data();state.settingId=state.profile.settingId;
       await requestNotifPermission();
+      initNativePush();
       if(state.profile.role==="minder"){
         const kids=await getDocs(collection(db,"settings",state.settingId,"children"));
         initAlerts("minder",state.settingId,kids.docs.map(d=>d.id));
@@ -489,6 +553,7 @@ function renderParentProfileSetup(settingId,childId,childName){
 function renderMinderHome(){
   clearSubs();
   state.activeChildId=null;state.currentTab=null;
+  maybeShowOnboarding("minder");
   const name=(state.profile?.name||"").split(" ")[0]||"";
   const today=new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});
   app.innerHTML=`
@@ -632,6 +697,7 @@ function openAddChild(){
 async function renderParentHome(){
   clearSubs();
   state.activeChildId=null;state.currentTab=null;
+  maybeShowOnboarding("parent");
   app.innerHTML='<div class="spin"></div>';
   try{
     const ids=state.profile.childIds||[];
@@ -719,7 +785,7 @@ function openChild(childId,child,admin,forcedTab=null){
       }else{
         $("#d").innerHTML=`<div class="card" style="padding:6px 4px"><div style="padding:6px 12px">${items.map((d,i)=>timelineRow(d.data(),i,i===items.length-1)).join("")}</div></div>
         ${admin?`<button class="btn btn-soft" id="summary" style="margin-top:14px">📋 Share ${esc(child.name.split(" ")[0])}'s day summary</button>`:""}`;
-        const sm=$("#summary");if(sm)sm.onclick=()=>shareDaySummary(child,items.map(d=>d.data()),sel);
+        const sm=$("#summary");if(sm)sm.onclick=()=>shareDaySummary(base,child,items.map(d=>d.data()),sel);
       }
     };
     renderAttendanceSummary(sel);
@@ -827,19 +893,137 @@ function openChild(childId,child,admin,forcedTab=null){
   }
 }
 
-/* ── day summary ── */
-function shareDaySummary(child,entries,key){
-  const dayLabel=key===todayKey()?"today":new Date(key).toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});
-  const lines=entries.slice().reverse().map(e=>{
-    const t=TYPES[e.type]||TYPES.note;
-    let extra="";
-    if(e.startTime&&e.endTime)extra=` (${e.startTime}–${e.endTime})`;
-    else if(e.portion)extra=` — ate ${e.portion.toLowerCase()}`;
-    return `${t.icon} ${fmtTime(e.createdAt)} ${t.label}${extra}${e.detail?": "+e.detail:""}`;
-  }).join("\n");
-  const msg=`🪺 ${child.name}'s day — ${dayLabel}\n\n${lines}\n\nShared via LittleNest`;
-  if(navigator.share)navigator.share({title:child.name+"'s day",text:msg}).catch(()=>{});
-  else{navigator.clipboard?.writeText(msg);toast("✓ Copied","Day summary copied to clipboard");}
+/* ── day summary (image export, native share sheet) ── */
+async function shareDaySummary(base,child,entries,key){
+  const dayLabel=key===todayKey()?"Today":new Date(key).toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});
+  const btn=$("#summary");
+  if(btn){btn.disabled=true;btn.textContent="Preparing…";}
+  try{
+    let observations=[];
+    try{
+      const os=await getDocs(query(collection(db,...base,"observations"),orderBy("createdAt","desc")));
+      observations=os.docs.map(d=>d.data()).filter(o=>dateOfEntry(o.createdAt)===key);
+    }catch(e){}
+    const blob=await renderDaySummaryImage(child,entries.slice().reverse(),observations,dayLabel);
+    const fname=`${(child.name||"child").replace(/\s+/g,"-")}-${key}.png`;
+    const file=new File([blob],fname,{type:"image/png"});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:`${child.name}'s day`,text:`${child.name}'s day — ${dayLabel} 🪺`});
+    }else{
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement("a");a.href=url;a.download=fname;document.body.appendChild(a);a.click();a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),4000);
+      toast("✓ Saved",'Day summary image saved to your device');
+    }
+  }catch(e){
+    if(e.name!=="AbortError")toast("Couldn't create summary",e.message||"");
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent=`📋 Share ${esc((child.name||"").split(" ")[0])}'s day summary`;}
+  }
+}
+
+/* renders a shareable PNG (works offline, no libraries, previews well in WhatsApp) */
+async function renderDaySummaryImage(child,entries,observations,dayLabel){
+  try{if(document.fonts&&document.fonts.ready)await document.fonts.ready;}catch(e){}
+  const W=640,SCALE=2,PAD=28,MAXH=3000;
+  const work=document.createElement("canvas");
+  work.width=W*SCALE;work.height=MAXH*SCALE;
+  const ctx=work.getContext("2d");
+  ctx.scale(SCALE,SCALE);
+  ctx.fillStyle="#F5F1FB";ctx.fillRect(0,0,W,MAXH);
+  ctx.textBaseline="alphabetic";
+  const wrap=(text,font,maxWidth)=>{
+    ctx.font=font;const words=(text||"").split(/\s+/).filter(Boolean);const lines=[];let cur="";
+    for(const w of words){const t=cur?cur+" "+w:w;if(ctx.measureText(t).width>maxWidth&&cur){lines.push(cur);cur=w;}else cur=t;}
+    if(cur)lines.push(cur);return lines;
+  };
+
+  const grad=ctx.createLinearGradient(0,0,W,132);
+  grad.addColorStop(0,"#7857E8");grad.addColorStop(1,"#5436C4");
+  ctx.fillStyle=grad;ctx.fillRect(0,0,W,132);
+  ctx.fillStyle="rgba(255,255,255,.85)";ctx.font="800 12px Nunito, sans-serif";
+  ctx.fillText("🪺  LITTLENEST DAILY SUMMARY",PAD,32);
+  ctx.fillStyle="#fff";ctx.font="600 34px Fraunces, serif";
+  ctx.fillText(child.name||"",PAD,78);
+  ctx.font="700 15px Nunito, sans-serif";ctx.fillStyle="rgba(255,255,255,.92)";
+  ctx.fillText(dayLabel,PAD,104);
+
+  let y=132+30;
+  const lineWidth=W-PAD*2;
+
+  if(!entries.length&&!observations.length){
+    ctx.fillStyle="#7E7591";ctx.font="600 15px Nunito, sans-serif";
+    ctx.fillText("Nothing logged for this day.",PAD,y+18);y+=50;
+  }
+
+  if(entries.length){
+    ctx.fillStyle="#241B33";ctx.font="800 12px Nunito, sans-serif";
+    ctx.fillText("TODAY'S CARE LOG",PAD,y);y+=22;
+    for(const e of entries){
+      const t=TYPES[e.type]||TYPES.note;
+      ctx.font="24px sans-serif";ctx.fillText(t.icon,PAD,y+20);
+      let meta=t.label;
+      if(e.startTime&&e.endTime)meta+=`  ${e.startTime}–${e.endTime}`;
+      else if(e.portion)meta+=`  ·  ate ${e.portion.toLowerCase()}`;
+      ctx.font="800 15px Nunito, sans-serif";ctx.fillStyle="#241B33";
+      ctx.fillText(meta,PAD+34,y+16);
+      ctx.font="700 12px Nunito, sans-serif";ctx.fillStyle="#7E7591";
+      ctx.textAlign="right";ctx.fillText(fmtTime(e.createdAt),W-PAD,y+16);ctx.textAlign="left";
+      y+=24;
+      if(e.detail){
+        const lines=wrap(e.detail,"600 14px Nunito, sans-serif",W-PAD-34);
+        ctx.fillStyle="#3A3147";
+        for(const ln of lines){ctx.fillText(ln,PAD+34,y+12);y+=19;}
+      }
+      y+=14;
+    }
+  }
+
+  if(observations.length){
+    y+=8;
+    ctx.fillStyle="#241B33";ctx.font="800 12px Nunito, sans-serif";
+    ctx.fillText("LEARNING JOURNEY",PAD,y);y+=24;
+    for(const o of observations){
+      ctx.font="600 18px Fraunces, serif";ctx.fillStyle="#241B33";
+      ctx.fillText(o.title||"",PAD,y+16);y+=26;
+      if((o.areas||[]).length){
+        ctx.font="800 11px Nunito, sans-serif";let x=PAD;
+        for(const a of o.areas){
+          const ar=AREAS[a];if(!ar)continue;
+          const label=ar.short,tw=ctx.measureText(label).width+16;
+          ctx.fillStyle=ar.colour+"33";ctx.fillRect(x,y,tw,20);
+          ctx.fillStyle="#3a3346";ctx.fillText(label,x+8,y+14);
+          x+=tw+6;
+        }
+        y+=30;
+      }
+      if(o.note){
+        const lines=wrap(o.note,"600 14px Nunito, sans-serif",lineWidth);
+        ctx.fillStyle="#3A3147";
+        for(const ln of lines){ctx.fillText(ln,PAD,y+12);y+=19;}
+      }
+      if(o.nextSteps){
+        y+=4;
+        const lines=wrap("Next steps: "+o.nextSteps,"700 13px Nunito, sans-serif",lineWidth);
+        ctx.fillStyle="#C99A3C";
+        for(const ln of lines){ctx.fillText(ln,PAD,y+12);y+=18;}
+      }
+      y+=16;
+    }
+  }
+
+  y+=8;
+  ctx.strokeStyle="#EBE4F4";ctx.beginPath();ctx.moveTo(PAD,y);ctx.lineTo(W-PAD,y);ctx.stroke();
+  y+=22;
+  ctx.fillStyle="#A79FB8";ctx.font="700 11px Nunito, sans-serif";
+  ctx.fillText(`Shared via LittleNest 🪺  ·  ${new Date().toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}`,PAD,y);
+  y+=20;
+
+  const finalH=Math.min(Math.ceil(y+PAD),MAXH);
+  const out=document.createElement("canvas");
+  out.width=W*SCALE;out.height=finalH*SCALE;
+  out.getContext("2d").drawImage(work,0,0,W*SCALE,finalH*SCALE,0,0,W*SCALE,finalH*SCALE);
+  return new Promise(res=>out.toBlob(res,"image/png",0.95));
 }
 
 /* ── cards ── */

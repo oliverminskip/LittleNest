@@ -1,0 +1,19 @@
+{
+  "name": "littlenest",
+  "private": true,
+  "version": "1.0.0",
+  "description": "LittleNest childminder app - Capacitor Android shell",
+  "scripts": {
+    "build:bridge": "esbuild bridge-src/push-bridge.js --bundle --format=iife --outfile=app/capacitor-bridge.js",
+    "cap:sync": "npm run build:bridge && npx cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.1",
+    "@capacitor/core": "^8.5.1",
+    "@capacitor/push-notifications": "^8.1.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.1",
+    "esbuild": "^0.28.2"
+  }
+}

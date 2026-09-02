@@ -1,0 +1,15 @@
+{
+  "_comment": "Placeholder only. Download the real google-services.json from the Firebase console (Project settings > your apps > Android app, package name com.littlenest.app) and save it as android/app/google-services.json — it is gitignored. Without it, the Google Services Gradle plugin won't apply and Push Notifications won't receive a real FCM token.",
+  "project_info": {
+    "project_id": "littlenest94"
+  },
+  "client": [
+    {
+      "client_info": {
+        "android_client_info": {
+          "package_name": "com.littlenest.app"
+        }
+      }
+    }
+  ]
+}
