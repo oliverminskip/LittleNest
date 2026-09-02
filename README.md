@@ -30,6 +30,25 @@ firebase target:apply hosting landing littlenest-landing
 firebase deploy --only hosting
 ```
 
+### Auto-deploy on merge to main
+
+`.github/workflows/deploy.yml` deploys both Hosting sites automatically on
+every push to `main`. It needs a repo secret:
+
+- **`FIREBASE_SERVICE_ACCOUNT`** — the full JSON of a service account key
+  with the **Firebase Hosting Admin** role on `littlenest94`. Create one at
+  [console.cloud.google.com/iam-admin/serviceaccounts](https://console.cloud.google.com/iam-admin/serviceaccounts?project=littlenest94)
+  (or `gcloud iam service-accounts create` + `gcloud iam service-accounts
+  keys create`), grant it `roles/firebasehosting.admin`, then paste the
+  downloaded key's full JSON content as the secret value under
+  **Settings > Secrets and variables > Actions** in this repo.
+
+The one-time `hosting:sites:create`/`target:apply` steps above still need to
+be run manually before the first automated deploy — the workflow deploys to
+whatever sites `.firebaserc` already points at, it doesn't create them.
+Functions aren't part of this workflow; deploy those manually (see below)
+once you're on Blaze.
+
 ## Daily export
 
 From a child's Diary tab, "Share day summary" renders that day's meals,
