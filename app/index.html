@@ -650,19 +650,19 @@ function childDashCard({c,att,updates},i){
         <span class="muted" style="font-size:22px;line-height:1">›</span>
       </div>
     </div>
-    ${linked?`<div style="display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line2)">
+    <div style="display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line2)">
       ${att&&att.signInAt&&!att.signOutAt
         ? `<button class="btn btn-ghost btn-sm" style="flex:1" data-out="${c.id}">Sign out</button>`
         : att&&att.signOutAt
           ? `<button class="btn btn-ghost btn-sm" style="flex:1" data-undo="${c.id}">Undo sign-out</button>`
           : `<button class="btn btn-green btn-sm" style="flex:1" data-in="${c.id}">Sign in</button>`}
       <button class="btn btn-soft btn-sm" style="flex:1" data-update="${c.id}">＋ Update</button>
-    </div>`
-    :`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line2);display:flex;align-items:center;justify-content:space-between;gap:10px">
+    </div>
+    ${!linked?`<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line2);display:flex;align-items:center;justify-content:space-between;gap:10px">
         <div><div class="muted" style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px">Parent code</div>
         <div style="font-family:monospace;font-size:16px;font-weight:800;color:var(--gold);letter-spacing:1px">${esc(c.setupCode||"")}</div></div>
         <button class="btn btn-soft btn-sm" data-share="${c.id}">Share code</button>
-      </div>`}
+      </div>`:""}
   </div>`;
 }
 
