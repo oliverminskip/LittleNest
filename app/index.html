@@ -215,7 +215,7 @@ window.onunhandledrejection=function(e){
 
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import{getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,updateProfile}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import{getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendPasswordResetEmail,signOut,updateProfile}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import{getFirestore,doc,getDoc,getDocs,setDoc,addDoc,updateDoc,deleteDoc,collection,query,orderBy,onSnapshot,serverTimestamp,arrayUnion}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig={apiKey:"AIzaSyCPl0p0di8yTNhZVPEP5SMYeR528kiYFrw",authDomain:"littlenest94.firebaseapp.com",projectId:"littlenest94",messagingSenderId:"8804693290",appId:"1:8804693290:web:cbd50128a876a043c79a53"};
@@ -246,6 +246,7 @@ const app=$("#app");
 const esc=s=>(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const fmtTime=ts=>{const d=ts?.toDate?ts.toDate():(ts instanceof Date?ts:new Date());return d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});};
 const fmtDate=ts=>{const d=ts?.toDate?ts.toDate():new Date();const t=new Date();return d.toDateString()===t.toDateString()?"Today":d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});};
+const fmtFullDate=ts=>{const d=ts?.toDate?ts.toDate():new Date();return d.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});};
 const phoneForWA=p=>{if(!p)return null;const c=p.replace(/\D/g,"");if(c.startsWith("07"))return"44"+c.slice(1);if(c.startsWith("44"))return c;return c;};
 const greeting=()=>{const h=new Date().getHours();return h<12?"Good morning":h<17?"Good afternoon":"Good evening";};
 const todayKey=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
@@ -435,9 +436,21 @@ function renderAuth(mode="in"){
       <div class="field-row"><input id="pw" type="password" placeholder="Password (6+ characters)" autocomplete="${mode==="up"?"new-password":"current-password"}"></div>
       <div style="height:6px"></div>
       <button class="btn btn-primary" id="go">${mode==="up"?"Create account":"Sign in"}</button>
+      ${mode==="in"?`<button class="btn btn-ghost" id="forgot" style="color:var(--sub);border:none;box-shadow:none;margin-bottom:0">Forgot password?</button>`:""}
       <button class="btn btn-ghost" id="swap">${mode==="up"?"Already have an account? Sign in":"New here? Create an account"}</button>
     </div>`;
   $("#swap").onclick=()=>renderAuth(mode==="up"?"in":"up");
+  const forgot=$("#forgot");
+  if(forgot)forgot.onclick=async()=>{
+    const email=$("#email").value.trim().toLowerCase();
+    if(!email){$("#err").innerHTML=`<div class="err">Enter your email above first, then tap "Forgot password?"</div>`;return;}
+    forgot.disabled=true;forgot.textContent="Sending…";
+    try{
+      await sendPasswordResetEmail(auth,email);
+      $("#err").innerHTML=`<div class="green-box"><span>📧</span><span style="font-size:13.5px;font-weight:700">Check your email for a reset link.</span></div>`;
+    }catch(e){$("#err").innerHTML=`<div class="err">${esc(prettyErr(e))}</div>`;}
+    forgot.disabled=false;forgot.textContent="Forgot password?";
+  };
   $("#go").onclick=async()=>{
     const email=$("#email").value.trim().toLowerCase(),pw=$("#pw").value;
     const btn=$("#go");btn.disabled=true;btn.textContent="Please wait…";
@@ -452,7 +465,7 @@ function renderAuth(mode="in"){
 }
 function prettyErr(e){
   const m=(e.code||"").replace("auth/","");
-  return({"invalid-email":"That email doesn't look right.","weak-password":"Password needs to be 6 or more characters.","email-already-in-use":"That email already has an account — try signing in.","invalid-credential":"Email or password not recognised.","invalid-login-credentials":"Email or password not recognised."}[m])||e.message;
+  return({"invalid-email":"That email doesn't look right.","weak-password":"Password needs to be 6 or more characters.","email-already-in-use":"That email already has an account — try signing in.","invalid-credential":"Email or password not recognised.","invalid-login-credentials":"Email or password not recognised.","user-not-found":"No account with that email."}[m])||e.message;
 }
 
 /* ── onboarding ── */
@@ -860,10 +873,16 @@ function openChild(childId,child,admin,forcedTab=null){
         </div>
         ${child.medicalNotes?`<div class="info-card" style="border-left:3px solid var(--danger)"><div class="title">🏥 Medical notes</div><p style="font-size:14px;line-height:1.5;margin:2px 0 0">${esc(child.medicalNotes)}</p></div>`:""}
         ${waPhone?`<button class="btn btn-green" id="wa" style="margin-top:8px">💬 WhatsApp ${esc((child.parentName||"parent").split(" ")[0])}</button>`:`<p class="muted center" style="font-size:13px;margin-top:16px">Parent hasn't added their mobile yet.</p>`}
+        <div class="info-card" style="border-left:3px solid var(--violet);margin-top:16px">
+          <div class="title">📁 Full record export</div>
+          <p style="font-size:13px;line-height:1.5;color:var(--sub);margin:0 0 12px">A complete archive of ${esc((child.name||"").split(" ")[0])}'s attendance, diary and learning journey, plus contact and medical details — for your own records once they leave your setting.</p>
+          <button class="btn btn-soft" id="exportrec">📁 Export full record (PDF)</button>
+        </div>
         <button class="btn btn-danger" id="del" style="margin-top:18px">Delete ${esc(child.name)}'s profile</button>`;
       if(waPhone)$("#wa").onclick=()=>window.open(`https://wa.me/${waPhone}?text=${encodeURIComponent("Hi "+(child.parentName||"")+"! Quick update from LittleNest 🪺")}`,"_blank");
+      $("#exportrec").onclick=()=>exportFullRecord(base,child);
       $("#del").onclick=async()=>{
-        if(!confirm(`Permanently delete ${child.name}'s profile and all records?`))return;
+        if(!confirm(`This permanently deletes ${child.name}'s profile and every record with it — there's no way back afterwards.\n\nHave you exported their full record first? Tap Cancel to go back and export, or OK to delete anyway.`))return;
         const b=$("#del");b.disabled=true;b.textContent="Deleting…";
         try{await deleteDoc(doc(db,"settings",state.settingId,"children",childId));if(child.setupCode)await deleteDoc(doc(db,"invites",child.setupCode));renderMinderHome();}
         catch(e){alert(e.message);b.disabled=false;b.textContent=`Delete ${child.name}'s profile`;}
@@ -1024,6 +1043,110 @@ async function renderDaySummaryImage(child,entries,observations,dayLabel){
   out.width=W*SCALE;out.height=finalH*SCALE;
   out.getContext("2d").drawImage(work,0,0,W*SCALE,finalH*SCALE,0,0,W*SCALE,finalH*SCALE);
   return new Promise(res=>out.toBlob(res,"image/png",0.95));
+}
+
+/* ── full record export (archival, not the daily share) ── */
+let jsPDFReady=null;
+function loadJsPDF(){
+  if(window.jspdf?.jsPDF)return Promise.resolve(window.jspdf.jsPDF);
+  if(jsPDFReady)return jsPDFReady;
+  jsPDFReady=new Promise((resolve,reject)=>{
+    const s=document.createElement("script");
+    s.src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js";
+    s.onload=()=>resolve(window.jspdf.jsPDF);
+    s.onerror=()=>{jsPDFReady=null;reject(new Error("Couldn't load the PDF library — check your connection and try again."));};
+    document.head.appendChild(s);
+  });
+  return jsPDFReady;
+}
+
+/* A full, printable archive of everything logged for a child - attendance, diary, learning
+   journey and contact/medical details - for the childminder to keep after the child leaves.
+   Deliberately a real (paginated) PDF rather than the daily-share image, and a direct download
+   rather than a share-sheet action, since this is a record to keep, not something to send on. */
+async function exportFullRecord(base,child){
+  const btn=$("#exportrec");
+  if(btn){btn.disabled=true;btn.textContent="Building record…";}
+  try{
+    const JsPDF=await loadJsPDF();
+    const [entriesSnap,obsSnap,attSnap]=await Promise.all([
+      getDocs(query(collection(db,...base,"entries"),orderBy("createdAt","asc"))),
+      getDocs(query(collection(db,...base,"observations"),orderBy("createdAt","asc"))),
+      getDocs(collection(db,...base,"attendance"))
+    ]);
+    const entries=entriesSnap.docs.map(d=>d.data());
+    const observations=obsSnap.docs.map(d=>d.data());
+    const attendance=attSnap.docs.map(d=>({date:d.id,...d.data()})).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
+
+    const doc=new JsPDF({unit:"pt",format:"a4"});
+    const W=595,H=842,M=48;
+    let y=M;
+    const gap=g=>{y+=g;if(y>H-M){doc.addPage();y=M;}};
+    const heading=text=>{doc.setFont("helvetica","bold");doc.setFontSize(13);doc.setTextColor(36,27,51);if(y>H-M-20){doc.addPage();y=M;}doc.text(text,M,y);gap(18);};
+    const body=(text,size=10,color=[58,49,71])=>{
+      doc.setFont("helvetica","normal");doc.setFontSize(size);doc.setTextColor(...color);
+      doc.splitTextToSize(text,W-M*2).forEach(l=>{if(y>H-M){doc.addPage();y=M;}doc.text(l,M,y);y+=size+4;});
+    };
+
+    doc.setFont("helvetica","bold");doc.setFontSize(20);doc.setTextColor(84,54,196);
+    doc.text("LittleNest — Full Record",M,y);y+=28;
+    doc.setFontSize(16);doc.setTextColor(36,27,51);
+    doc.text(child.name||"",M,y);y+=20;
+    doc.setFont("helvetica","normal");doc.setFontSize(10.5);doc.setTextColor(126,117,145);
+    doc.text(`Date of birth: ${child.dob||"Not provided"}`,M,y);y+=15;
+    doc.text(`Exported: ${new Date().toLocaleString("en-GB")}`,M,y);gap(26);
+
+    heading("Parent / guardian");
+    body(`Name: ${child.parentName||"Not provided"}`);
+    body(`Mobile: ${child.parentPhone||"Not provided"}`);
+    body(`Email: ${(child.parentEmails||[]).join(", ")||"Not provided"}`);
+    gap(12);
+
+    heading("Emergency contact");
+    body(`Name: ${child.emergencyName||"Not provided"}`);
+    body(`Phone: ${child.emergencyPhone||"Not provided"}`);
+    gap(12);
+
+    if(child.medicalNotes){
+      heading("Medical notes");
+      body(child.medicalNotes);
+      gap(12);
+    }
+
+    heading(`Attendance (${attendance.length} day${attendance.length===1?"":"s"})`);
+    if(!attendance.length)body("No attendance recorded.");
+    attendance.forEach(a=>body(`${a.date}   In: ${a.signInAt?fmtTime(a.signInAt):"—"}   Out: ${a.signOutAt?fmtTime(a.signOutAt):"—"}`,9.5));
+    gap(14);
+
+    heading(`Diary log (${entries.length} entr${entries.length===1?"y":"ies"})`);
+    if(!entries.length)body("No diary entries recorded.");
+    entries.forEach(e=>{
+      const t=TYPES[e.type]||TYPES.note;
+      let meta=`${fmtFullDate(e.createdAt)} ${fmtTime(e.createdAt)} — ${t.label}`;
+      if(e.startTime&&e.endTime)meta+=` (${e.startTime}–${e.endTime})`;
+      if(e.portion)meta+=` (ate ${e.portion})`;
+      body(meta,9.5,[36,27,51]);
+      if(e.detail)body(`   ${e.detail}`,9.5,[110,100,125]);
+    });
+    gap(14);
+
+    heading(`Learning journey (${observations.length} observation${observations.length===1?"":"s"})`);
+    if(!observations.length)body("No observations recorded.");
+    observations.forEach(o=>{
+      body(`${fmtFullDate(o.createdAt)} — ${o.title||""}`,10.5,[36,27,51]);
+      const areas=(o.areas||[]).map(a=>AREAS[a]?.short).filter(Boolean).join(", ");
+      if(areas)body(`Areas: ${areas}`,9,[126,117,145]);
+      if(o.note)body(o.note,9.5);
+      if(o.nextSteps)body(`Next steps: ${o.nextSteps}`,9.5,[201,154,60]);
+      gap(8);
+    });
+
+    doc.save(`${(child.name||"child").replace(/\s+/g,"-")}-full-record.pdf`);
+  }catch(e){
+    toast("Couldn't build the record",e.message||"");
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent="📁 Export full record (PDF)";}
+  }
 }
 
 /* ── cards ── */

@@ -59,6 +59,17 @@ the native share sheet (WhatsApp etc.) as an image, not a link — this is
 what replaces Fran's end-of-day WhatsApp updates. Falls back to a direct
 download where Web Share's file support isn't there.
 
+## Full record export
+
+Separate from the daily share: from a child's Profile tab, "Export full
+record (PDF)" pulls their entire attendance/diary/learning-journey history
+plus contact and medical details into one paginated PDF, downloaded
+directly (not shared) via `jsPDF` (loaded from a CDN on demand, not
+bundled, since it's only needed on that one screen). This is what a
+childminder keeps after a child leaves their setting — record-keeping
+obligations don't end when the child does. The delete-child confirmation
+now nudges towards exporting first, though it doesn't block deletion.
+
 ## Parent linking
 
 Already existed before this session: a childminder adds a child, gets a
