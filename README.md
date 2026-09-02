@@ -33,7 +33,9 @@ firebase deploy --only hosting
 ### Auto-deploy on merge to main
 
 `.github/workflows/deploy.yml` deploys both Hosting sites automatically on
-every push to `main`. It needs a repo secret:
+every push to `main`, including creating the `littlenest-landing` site and
+applying both targets itself (idempotent — safe to run on every deploy, not
+just the first). It needs one repo secret:
 
 - **`FIREBASE_SERVICE_ACCOUNT`** — the full JSON of a service account key
   with the **Firebase Hosting Admin** role on `littlenest94`. Create one at
@@ -43,11 +45,10 @@ every push to `main`. It needs a repo secret:
   downloaded key's full JSON content as the secret value under
   **Settings > Secrets and variables > Actions** in this repo.
 
-The one-time `hosting:sites:create`/`target:apply` steps above still need to
-be run manually before the first automated deploy — the workflow deploys to
-whatever sites `.firebaserc` already points at, it doesn't create them.
-Functions aren't part of this workflow; deploy those manually (see below)
-once you're on Blaze.
+That's the only manual step — once the secret's added, push to `main` (or
+re-run the workflow from the Actions tab) and it handles the rest, no local
+Firebase CLI needed. Functions aren't part of this workflow; deploy those
+manually (see below) once you're on Blaze.
 
 ## Daily export
 
