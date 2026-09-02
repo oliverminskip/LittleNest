@@ -59,6 +59,21 @@ the native share sheet (WhatsApp etc.) as an image, not a link — this is
 what replaces Fran's end-of-day WhatsApp updates. Falls back to a direct
 download where Web Share's file support isn't there.
 
+## Firestore security rules
+
+`firestore.rules` is the source of truth from here on (previously only lived
+in the Firebase console, which made reviewing/changing it a copy-paste
+exercise). Strict per-tenant isolation: a childminder owns everything under
+their `settings/{id}`, a parent only ever sees the specific children whose
+`parentUids` contains their uid, and the final catch-all denies anything not
+explicitly matched.
+
+Deploy a rules change with `firebase deploy --only firestore:rules` (needs
+`firebase login` — the CI service account is deliberately scoped to Hosting
+only, not rules, so this isn't automated; widen its role to
+`roles/firebaserules.admin` and add a step to `.github/workflows/deploy.yml`
+if you want that too).
+
 ## Full record export
 
 Separate from the daily share: from a child's Profile tab, "Export full
