@@ -215,7 +215,7 @@ window.onunhandledrejection=function(e){
 
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import{getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,updateProfile}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import{getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendPasswordResetEmail,signOut,updateProfile}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import{getFirestore,doc,getDoc,getDocs,setDoc,addDoc,updateDoc,deleteDoc,collection,query,orderBy,onSnapshot,serverTimestamp,arrayUnion}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig={apiKey:"AIzaSyCPl0p0di8yTNhZVPEP5SMYeR528kiYFrw",authDomain:"littlenest94.firebaseapp.com",projectId:"littlenest94",messagingSenderId:"8804693290",appId:"1:8804693290:web:cbd50128a876a043c79a53"};
@@ -435,9 +435,21 @@ function renderAuth(mode="in"){
       <div class="field-row"><input id="pw" type="password" placeholder="Password (6+ characters)" autocomplete="${mode==="up"?"new-password":"current-password"}"></div>
       <div style="height:6px"></div>
       <button class="btn btn-primary" id="go">${mode==="up"?"Create account":"Sign in"}</button>
+      ${mode==="in"?`<button class="btn btn-ghost" id="forgot" style="color:var(--sub);border:none;box-shadow:none;margin-bottom:0">Forgot password?</button>`:""}
       <button class="btn btn-ghost" id="swap">${mode==="up"?"Already have an account? Sign in":"New here? Create an account"}</button>
     </div>`;
   $("#swap").onclick=()=>renderAuth(mode==="up"?"in":"up");
+  const forgot=$("#forgot");
+  if(forgot)forgot.onclick=async()=>{
+    const email=$("#email").value.trim().toLowerCase();
+    if(!email){$("#err").innerHTML=`<div class="err">Enter your email above first, then tap "Forgot password?"</div>`;return;}
+    forgot.disabled=true;forgot.textContent="Sending…";
+    try{
+      await sendPasswordResetEmail(auth,email);
+      $("#err").innerHTML=`<div class="green-box"><span>📧</span><span style="font-size:13.5px;font-weight:700">Check your email for a reset link.</span></div>`;
+    }catch(e){$("#err").innerHTML=`<div class="err">${esc(prettyErr(e))}</div>`;}
+    forgot.disabled=false;forgot.textContent="Forgot password?";
+  };
   $("#go").onclick=async()=>{
     const email=$("#email").value.trim().toLowerCase(),pw=$("#pw").value;
     const btn=$("#go");btn.disabled=true;btn.textContent="Please wait…";
@@ -452,7 +464,7 @@ function renderAuth(mode="in"){
 }
 function prettyErr(e){
   const m=(e.code||"").replace("auth/","");
-  return({"invalid-email":"That email doesn't look right.","weak-password":"Password needs to be 6 or more characters.","email-already-in-use":"That email already has an account — try signing in.","invalid-credential":"Email or password not recognised.","invalid-login-credentials":"Email or password not recognised."}[m])||e.message;
+  return({"invalid-email":"That email doesn't look right.","weak-password":"Password needs to be 6 or more characters.","email-already-in-use":"That email already has an account — try signing in.","invalid-credential":"Email or password not recognised.","invalid-login-credentials":"Email or password not recognised.","user-not-found":"No account with that email."}[m])||e.message;
 }
 
 /* ── onboarding ── */
