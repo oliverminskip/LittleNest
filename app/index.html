@@ -1079,88 +1079,239 @@ function loadJsPDF(){
   return jsPDFReady;
 }
 
+/* PDF colour palette - mirrors the app's CSS custom properties so the export
+   reads as the same product, not a generic text dump. jsPDF's base fonts
+   (Helvetica/Times/Courier) carry no emoji glyphs, so hierarchy here comes
+   from colour, spacing and card layout instead of icons. */
+const PDFC={
+  violet:[108,74,226], vd:[84,54,196], ink:[36,27,51], ink2:[58,49,71],
+  sub:[126,117,145], faint:[167,159,184], line:[235,228,244], zebra:[248,246,252],
+  lilac:[238,232,251], goldbg:[251,243,223], gold:[201,154,60],
+  dangerbg:[252,241,243], danger:[192,69,91], greenbg:[231,246,238], green:[26,133,81]
+};
+const pdfHexToRgb=hex=>{const h=(hex||"#EEEEEE").replace("#","");return [0,2,4].map(i=>parseInt(h.substr(i,2),16));};
+
 /* A full, printable archive of everything logged for a child - attendance, diary, learning
-   journey and contact/medical details - for the childminder to keep after the child leaves.
-   Deliberately a real (paginated) PDF rather than the daily-share image, and a direct download
-   rather than a share-sheet action, since this is a record to keep, not something to send on. */
+   journey, incidents/medication and contact/medical details - for the childminder to keep
+   after the child leaves. Deliberately a real (paginated) PDF rather than the daily-share
+   image, and a direct download rather than a share-sheet action, since this is a record to
+   keep, not something to send on. */
 async function exportFullRecord(base,child){
   const btn=$("#exportrec");
   if(btn){btn.disabled=true;btn.textContent="Building record…";}
   try{
     const JsPDF=await loadJsPDF();
-    const [entriesSnap,obsSnap,attSnap]=await Promise.all([
+    const [entriesSnap,obsSnap,attSnap,settingSnap]=await Promise.all([
       getDocs(query(collection(db,...base,"entries"),orderBy("createdAt","asc"))),
       getDocs(query(collection(db,...base,"observations"),orderBy("createdAt","asc"))),
-      getDocs(collection(db,...base,"attendance"))
+      getDocs(collection(db,...base,"attendance")),
+      getDoc(doc(db,base[0],base[1])).catch(()=>null)
     ]);
     const entries=entriesSnap.docs.map(d=>d.data());
     const observations=obsSnap.docs.map(d=>d.data());
     const attendance=attSnap.docs.map(d=>({date:d.id,...d.data()})).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
+    const auditableEntries=entries.filter(e=>(TYPES[e.type]||{}).auditable);
+    const diaryEntries=entries.filter(e=>!(TYPES[e.type]||{}).auditable);
+    const settingName=(settingSnap&&settingSnap.exists&&settingSnap.exists())?(settingSnap.data().name||""):"";
 
-    const doc=new JsPDF({unit:"pt",format:"a4"});
-    const W=595,H=842,M=48;
-    let y=M;
-    const gap=g=>{y+=g;if(y>H-M){doc.addPage();y=M;}};
-    const heading=text=>{doc.setFont("helvetica","bold");doc.setFontSize(13);doc.setTextColor(36,27,51);if(y>H-M-20){doc.addPage();y=M;}doc.text(text,M,y);gap(18);};
-    const body=(text,size=10,color=[58,49,71])=>{
-      doc.setFont("helvetica","normal");doc.setFontSize(size);doc.setTextColor(...color);
-      doc.splitTextToSize(text,W-M*2).forEach(l=>{if(y>H-M){doc.addPage();y=M;}doc.text(l,M,y);y+=size+4;});
+    const jdoc=new JsPDF({unit:"pt",format:"a4"});
+    const W=595,H=842,M=44,CW=W-M*2;
+    let y=0;
+
+    const ensureSpace=h=>{if(y+h>H-56){jdoc.addPage();y=M;}};
+    const wrapLines=(text,size,bold,maxWidth)=>{
+      jdoc.setFont("helvetica",bold?"bold":"normal");jdoc.setFontSize(size);
+      return jdoc.splitTextToSize(String(text||""),maxWidth);
     };
 
-    doc.setFont("helvetica","bold");doc.setFontSize(20);doc.setTextColor(84,54,196);
-    doc.text("LittleNest — Full Record",M,y);y+=28;
-    doc.setFontSize(16);doc.setTextColor(36,27,51);
-    doc.text(child.name||"",M,y);y+=20;
-    doc.setFont("helvetica","normal");doc.setFontSize(10.5);doc.setTextColor(126,117,145);
-    doc.text(`Date of birth: ${child.dob||"Not provided"}`,M,y);y+=15;
-    doc.text(`Exported: ${new Date().toLocaleString("en-GB")}`,M,y);gap(26);
+    /* ---- cover ---- */
+    jdoc.setFillColor(...PDFC.violet);jdoc.rect(0,0,W,118,'F');
+    jdoc.setFont("helvetica","bold");jdoc.setFontSize(11);jdoc.setTextColor(255,255,255);
+    jdoc.text("LITTLENEST — FULL CHILD RECORD",M,40);
+    jdoc.setFont("helvetica","normal");jdoc.setFontSize(10);jdoc.setTextColor(226,218,250);
+    jdoc.text("Confidential — retain per your record-keeping obligations after the child leaves",M,58);
+    jdoc.setFont("helvetica","bold");jdoc.setFontSize(27);jdoc.setTextColor(255,255,255);
+    jdoc.text(child.name||"Child",M,98);
 
-    heading("Parent / guardian");
-    body(`Name: ${child.parentName||"Not provided"}`);
-    body(`Mobile: ${child.parentPhone||"Not provided"}`);
-    body(`Email: ${(child.parentEmails||[]).join(", ")||"Not provided"}`);
-    gap(12);
+    y=150;
+    jdoc.setFont("helvetica","normal");jdoc.setFontSize(10.5);jdoc.setTextColor(...PDFC.sub);
+    jdoc.text(`Date of birth: ${child.dob||"Not provided"}`,M,y);y+=15;
+    if(settingName){jdoc.text(`Setting: ${settingName}`,M,y);y+=15;}
+    jdoc.text(`Exported: ${new Date().toLocaleString("en-GB")}`,M,y);y+=28;
 
-    heading("Emergency contact");
-    body(`Name: ${child.emergencyName||"Not provided"}`);
-    body(`Phone: ${child.emergencyPhone||"Not provided"}`);
-    gap(12);
+    const stats=[
+      ["Days attended",attendance.length],
+      ["Diary entries",diaryEntries.length],
+      ["Learning obs.",observations.length],
+      ["Safeguarding records",auditableEntries.length]
+    ];
+    const tileGap=10,tileW=(CW-3*tileGap)/4,tileH=54;
+    stats.forEach((s,i)=>{
+      const x=M+i*(tileW+tileGap);
+      jdoc.setFillColor(...PDFC.lilac);jdoc.roundedRect(x,y,tileW,tileH,8,8,'F');
+      jdoc.setFont("helvetica","bold");jdoc.setFontSize(21);jdoc.setTextColor(...PDFC.vd);
+      jdoc.text(String(s[1]),x+12,y+29);
+      jdoc.setFont("helvetica","bold");jdoc.setFontSize(7.5);jdoc.setTextColor(...PDFC.sub);
+      jdoc.text(s[0].toUpperCase(),x+12,y+43,{maxWidth:tileW-16});
+    });
+    y+=tileH+30;
+
+    const sectionHeader=title=>{
+      ensureSpace(30);
+      jdoc.setFillColor(...PDFC.vd);jdoc.roundedRect(M,y,4,16,2,2,'F');
+      jdoc.setFont("helvetica","bold");jdoc.setFontSize(13);jdoc.setTextColor(...PDFC.ink);
+      jdoc.text(title,M+12,y+12);
+      y+=26;
+    };
+
+    /* generic record card: lines=[{text,size,bold,color}], optional accent bar + tag pill */
+    const drawCard=(lines,{accent=null,bg=PDFC.lilac,pillText=null,pillColor=PDFC.violet}={})=>{
+      const padX=12,padY=10,lineGap=4,indent=accent?7:0;
+      let pillW=0;
+      if(pillText){jdoc.setFont("helvetica","bold");jdoc.setFontSize(9);pillW=jdoc.getTextWidth(pillText)+16;}
+      const wrappedLines=[];
+      lines.forEach(l=>wrapLines(l.text,l.size,l.bold,CW-padX*2-indent).forEach(w=>wrappedLines.push({text:w,size:l.size,bold:l.bold,color:l.color})));
+      const pillH=pillText?20:0;
+      const textH=wrappedLines.reduce((a,l)=>a+l.size+lineGap,0);
+      const cardH=padY*2+pillH+(pillH?6:0)+textH;
+      ensureSpace(cardH+10);
+      jdoc.setFillColor(...bg);jdoc.roundedRect(M,y,CW,cardH,8,8,'F');
+      if(accent){jdoc.setFillColor(...accent);jdoc.roundedRect(M,y,6,cardH,3,3,'F');}
+      const tx=M+padX+indent;
+      let ty=y+padY+10;
+      if(pillText){
+        jdoc.setFillColor(...pillColor);jdoc.roundedRect(tx,y+padY-2,pillW,pillH,10,10,'F');
+        jdoc.setFont("helvetica","bold");jdoc.setFontSize(9);jdoc.setTextColor(255,255,255);
+        jdoc.text(pillText,tx+8,y+padY+12);
+        ty+=pillH+6;
+      }
+      wrappedLines.forEach(l=>{
+        jdoc.setFont("helvetica",l.bold?"bold":"normal");jdoc.setFontSize(l.size);jdoc.setTextColor(...(l.color||PDFC.ink2));
+        jdoc.text(l.text,tx,ty);
+        ty+=l.size+lineGap;
+      });
+      y+=cardH+10;
+    };
+
+    /* ---- parent / emergency / medical ---- */
+    sectionHeader("Parent / guardian");
+    drawCard([
+      {text:`Name: ${child.parentName||"Not provided"}`,size:10},
+      {text:`Mobile: ${child.parentPhone||"Not provided"}`,size:10},
+      {text:`Email: ${(child.parentEmails||[]).join(", ")||"Not provided"}`,size:10}
+    ]);
+
+    sectionHeader("Emergency contact");
+    drawCard([
+      {text:`Name: ${child.emergencyName||"Not provided"}`,size:10},
+      {text:`Phone: ${child.emergencyPhone||"Not provided"}`,size:10}
+    ]);
 
     if(child.medicalNotes){
-      heading("Medical notes");
-      body(child.medicalNotes);
-      gap(12);
+      sectionHeader("Medical notes");
+      drawCard([{text:child.medicalNotes,size:10}],{accent:PDFC.danger,bg:PDFC.dangerbg});
     }
 
-    heading(`Attendance (${attendance.length} day${attendance.length===1?"":"s"})`);
-    if(!attendance.length)body("No attendance recorded.");
-    attendance.forEach(a=>body(`${a.date}   In: ${a.signInAt?fmtTime(a.signInAt):"—"}   Out: ${a.signOutAt?fmtTime(a.signOutAt):"—"}`,9.5));
-    gap(14);
+    /* ---- attendance table ---- */
+    sectionHeader(`Attendance (${attendance.length} day${attendance.length===1?"":"s"})`);
+    if(!attendance.length){
+      drawCard([{text:"No attendance recorded.",size:10,color:PDFC.sub}]);
+    }else{
+      const cols=[{l:"Date",w:0.32},{l:"Sign in",w:0.22},{l:"Sign out",w:0.22},{l:"Hours",w:0.24}];
+      const rowH=20;
+      const drawHeaderRow=()=>{
+        jdoc.setFillColor(...PDFC.vd);jdoc.rect(M,y,CW,rowH,'F');
+        let cx=M;
+        jdoc.setFont("helvetica","bold");jdoc.setFontSize(9);jdoc.setTextColor(255,255,255);
+        cols.forEach(c=>{jdoc.text(c.l.toUpperCase(),cx+8,y+14);cx+=CW*c.w;});
+        y+=rowH;
+      };
+      ensureSpace(rowH*2);
+      drawHeaderRow();
+      attendance.forEach((a,i)=>{
+        ensureSpace(rowH);
+        if(y===M)drawHeaderRow();
+        jdoc.setFillColor(...(i%2===0?[255,255,255]:PDFC.zebra));jdoc.rect(M,y,CW,rowH,'F');
+        let hours="—";
+        if(a.signInAt&&a.signOutAt){
+          const inD=a.signInAt.toDate?a.signInAt.toDate():new Date(a.signInAt);
+          const outD=a.signOutAt.toDate?a.signOutAt.toDate():new Date(a.signOutAt);
+          const ms=outD-inD;
+          if(ms>0)hours=(ms/3600000).toFixed(1)+"h";
+        }
+        const cells=[a.date,a.signInAt?fmtTime(a.signInAt):"—",a.signOutAt?fmtTime(a.signOutAt):"—",hours];
+        let cx=M;
+        jdoc.setFont("helvetica","normal");jdoc.setFontSize(9.5);jdoc.setTextColor(...PDFC.ink2);
+        cols.forEach((c,ci)=>{jdoc.text(String(cells[ci]),cx+8,y+14);cx+=CW*c.w;});
+        y+=rowH;
+      });
+      y+=14;
+    }
 
-    heading(`Diary log (${entries.length} entr${entries.length===1?"y":"ies"})`);
-    if(!entries.length)body("No diary entries recorded.");
-    entries.forEach(e=>{
+    /* ---- incidents, accidents & medication - the compliance-critical section ---- */
+    sectionHeader(`Incidents, accidents & medication (${auditableEntries.length})`);
+    if(!auditableEntries.length){
+      drawCard([{text:"No incidents, accidents or medication recorded.",size:10,color:PDFC.sub}]);
+    }
+    auditableEntries.forEach(e=>{
       const t=TYPES[e.type]||TYPES.note;
-      let meta=`${fmtFullDate(e.createdAt)} ${fmtTime(e.createdAt)} — ${t.label}`;
-      if(e.startTime&&e.endTime)meta+=` (${e.startTime}–${e.endTime})`;
-      if(e.portion)meta+=` (ate ${e.portion})`;
-      body(meta,9.5,[36,27,51]);
-      if(e.detail)body(`   ${e.detail}`,9.5,[110,100,125]);
+      const lines=[{text:`${fmtFullDate(e.createdAt)}  ${fmtTime(e.createdAt)}`,size:9,bold:true,color:PDFC.sub}];
+      if(t.medication){
+        lines.push({text:`${e.medName||"Medication"} — ${e.medDose||""}`,size:11,bold:true,color:PDFC.ink});
+        if(e.detail)lines.push({text:`Reason: ${e.detail}`,size:9.5});
+        lines.push({text:e.consentConfirmed?"Parent consent confirmed at time of administration.":"Consent was NOT confirmed at time of administration.",size:9,bold:true,color:e.consentConfirmed?PDFC.green:PDFC.danger});
+      }else{
+        if(e.detail)lines.push({text:`What happened: ${e.detail}`,size:9.5});
+        if(e.injury)lines.push({text:`Injury: ${e.injury}`,size:9.5});
+        if(e.actionTaken)lines.push({text:`Action taken: ${e.actionTaken}`,size:9.5});
+      }
+      lines.push({
+        text:e.acknowledgedAt?`Acknowledged by parent: ${fmtFullDate(e.acknowledgedAt)} ${fmtTime(e.acknowledgedAt)}`:"Not yet acknowledged by parent",
+        size:9,bold:true,color:e.acknowledgedAt?PDFC.green:PDFC.gold
+      });
+      drawCard(lines,{accent:PDFC.danger,bg:PDFC.dangerbg,pillText:t.label,pillColor:PDFC.danger});
     });
-    gap(14);
 
-    heading(`Learning journey (${observations.length} observation${observations.length===1?"":"s"})`);
-    if(!observations.length)body("No observations recorded.");
+    /* ---- diary log ---- */
+    sectionHeader(`Diary log (${diaryEntries.length} entr${diaryEntries.length===1?"y":"ies"})`);
+    if(!diaryEntries.length){
+      drawCard([{text:"No diary entries recorded.",size:10,color:PDFC.sub}]);
+    }
+    diaryEntries.forEach(e=>{
+      const t=TYPES[e.type]||TYPES.note;
+      let metaLine=`${fmtFullDate(e.createdAt)}  ${fmtTime(e.createdAt)}`;
+      if(e.startTime&&e.endTime)metaLine+=`  (${e.startTime}–${e.endTime})`;
+      if(e.portion)metaLine+=`  · ate ${e.portion}`;
+      const lines=[{text:metaLine,size:9,bold:true,color:PDFC.sub}];
+      if(e.detail)lines.push({text:e.detail,size:10});
+      drawCard(lines,{bg:pdfHexToRgb(t.tint),pillText:t.label,pillColor:PDFC.vd});
+    });
+
+    /* ---- learning journey ---- */
+    sectionHeader(`Learning journey (${observations.length} observation${observations.length===1?"":"s"})`);
+    if(!observations.length){
+      drawCard([{text:"No observations recorded.",size:10,color:PDFC.sub}]);
+    }
     observations.forEach(o=>{
-      body(`${fmtFullDate(o.createdAt)} — ${o.title||""}`,10.5,[36,27,51]);
-      const areas=(o.areas||[]).map(a=>AREAS[a]?.short).filter(Boolean).join(", ");
-      if(areas)body(`Areas: ${areas}`,9,[126,117,145]);
-      if(o.note)body(o.note,9.5);
-      if(o.nextSteps)body(`Next steps: ${o.nextSteps}`,9.5,[201,154,60]);
-      gap(8);
+      const areas=(o.areas||[]).map(a=>AREAS[a]?.short).filter(Boolean).join(" · ");
+      const lines=[{text:fmtFullDate(o.createdAt),size:9,bold:true,color:PDFC.sub},{text:o.title||"",size:12,bold:true,color:PDFC.ink}];
+      if(areas)lines.push({text:`EYFS areas: ${areas}`,size:9,color:PDFC.sub});
+      if(o.note)lines.push({text:o.note,size:10});
+      if(o.nextSteps)lines.push({text:`Next steps: ${o.nextSteps}`,size:9.5,bold:true,color:PDFC.gold});
+      drawCard(lines,{accent:PDFC.gold,bg:PDFC.goldbg});
     });
 
-    doc.save(`${(child.name||"child").replace(/\s+/g,"-")}-full-record.pdf`);
+    /* ---- footer, stamped on every page once total page count is known ---- */
+    const totalPages=jdoc.internal.getNumberOfPages();
+    for(let p=1;p<=totalPages;p++){
+      jdoc.setPage(p);
+      jdoc.setDrawColor(...PDFC.line);jdoc.setLineWidth(0.5);jdoc.line(M,H-40,W-M,H-40);
+      jdoc.setFont("helvetica","normal");jdoc.setFontSize(8.5);jdoc.setTextColor(...PDFC.faint);
+      jdoc.text(`LittleNest — confidential record for ${child.name||"child"}`,M,H-28);
+      jdoc.text(`Page ${p} of ${totalPages}`,W-M,H-28,{align:"right"});
+    }
+
+    jdoc.save(`${(child.name||"child").replace(/\s+/g,"-")}-full-record.pdf`);
   }catch(e){
     toast("Couldn't build the record",e.message||"");
   }finally{
