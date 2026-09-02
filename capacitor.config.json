@@ -1,0 +1,8 @@
+{
+  "appId": "com.littlenest.app",
+  "appName": "LittleNest",
+  "webDir": "app",
+  "android": {
+    "allowMixedContent": false
+  }
+}

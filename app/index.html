@@ -203,6 +203,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--violet);box-shadow:0 
   </div>
 </div>
 
+<script src="capacitor-bridge.js"></script>
 <script>
 window.onerror=function(msg,src,line){
   document.getElementById("app").innerHTML='<div style="padding:24px 20px;font-family:monospace;font-size:12px;color:#C0455B;background:#fff8f8;margin:20px;border-radius:12px"><b>Error (line '+line+'):</b><br>'+msg+'</div>';
@@ -272,6 +273,24 @@ const clearAlerts=()=>{alertSubs.forEach(u=>u&&u());alertSubs=[];};
 async function requestNotifPermission(){
   if(!('Notification' in window))return;
   if(Notification.permission==='default') await Notification.requestPermission();
+}
+/* Capacitor Android shell only — the bridge (app/capacitor-bridge.js) no-ops on the web PWA */
+let nativePushWired=false;
+function initNativePush(){
+  if(!window.LittleNestPush)return;
+  if(!nativePushWired){
+    nativePushWired=true;
+    window.addEventListener("littlenest:push-token",async e=>{
+      const token=e.detail,u=auth.currentUser;
+      if(!token||!u)return;
+      try{await updateDoc(doc(db,"users",u.uid),{fcmTokens:arrayUnion(token)});}catch(err){}
+    });
+    window.addEventListener("littlenest:push-received",e=>{
+      const n=e.detail?.notification||e.detail||{};
+      toast(n.title||"LittleNest 🪺",n.body||"You have a new update.");
+    });
+  }
+  window.LittleNestPush.init();
 }
 function pushNotif(title,body,childId,onClick){
   toast(title,body,onClick);
@@ -346,6 +365,7 @@ onAuthStateChanged(auth,async user=>{
     if(snap.exists()){
       state.profile=snap.data();state.settingId=state.profile.settingId;
       await requestNotifPermission();
+      initNativePush();
       if(state.profile.role==="minder"){
         const kids=await getDocs(collection(db,"settings",state.settingId,"children"));
         initAlerts("minder",state.settingId,kids.docs.map(d=>d.id));
